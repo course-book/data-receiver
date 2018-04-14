@@ -34,7 +34,13 @@ amqp.connect(RABBIT_HOST)
               logger.info(message);
               const content = message.content.toString();
               logger.info(`  [x] ${content}`);
-              var state = handler.recieveMessage(routingKey, content);
+              var state;
+              switch (message.type):
+            	  case "REGISTRATION":
+            		  state = handler.recieveMessage(routingKey, content);
+            		  break;
+        		  default:
+        			  logger.warn(message)
               if(state) {
             	logger.info("acknowledge");
             	channel.ack(message);  
