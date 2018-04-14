@@ -7,10 +7,14 @@ const MongoHandler = require("./mongoHandler");
 dotenv.config()
 
 const mongo_host = process.env.MONGO_HOST;
+const riak_host = process.env.RIAK_HOST;
+const redis_host = process.env.REDIS_HOST;
 const RABBIT_HOST = process.env.RABBITMQ_HOST;
 
 let logger = SimpleNodeLogger.createSimpleLogger();
-const handler = new MongoHandler(mongo_host, logger);
+const mongo_handler = new MongoHandler(mongo_host, logger);
+const riak_handler = new RiakHandler(riak_host, logger);
+const redis_handler = new RedisHandler(redis_host, logger);
 
 
 amqp.connect(RABBIT_HOST)
@@ -37,7 +41,7 @@ amqp.connect(RABBIT_HOST)
               var state;
               switch (message.type):
             	  case "REGISTRATION":
-            		  state = handler.recieveMessage(routingKey, content);
+            		  state = mongo_handler.recieveMessage(routingKey, content);
             		  break;
         		  default:
         			  logger.warn(message)
