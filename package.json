@@ -1,0 +1,28 @@
+{
+  "name": "data-receiver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/course-book/data-receiver.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/course-book/data-receiver/issues"
+  },
+  "homepage": "https://github.com/course-book/data-receiver#readme",
+  "dependencies": {
+    "amqplib": "^0.5.2",
+    "basho-riak-client": "^2.4.0",
+    "dotenv": "^5.0.1",
+    "simple-node-logger": "^0.93.37"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.3"
+  }
+}
