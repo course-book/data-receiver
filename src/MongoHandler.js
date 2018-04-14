@@ -15,4 +15,4 @@ class MongoHandler {
   }
 }
 
-module.exports = mongoHandler;
+module.exports = MongoHandler;

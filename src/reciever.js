@@ -10,7 +10,7 @@ const mongo_host = process.env.MONGO_HOST;
 const RABBIT_HOST = process.env.RABBITMQ_HOST;
 
 let logger = SimpleNodeLogger.createSimpleLogger();
-const handler = new MongoHandlerHandler(host, logger);
+const handler = new MongoHandler(mongo_host, logger);
 
 
 amqp.connect(RABBIT_HOST)
@@ -34,11 +34,13 @@ amqp.connect(RABBIT_HOST)
               logger.info(message);
               const content = message.content.toString();
               logger.info(`  [x] ${content}`);
-              var state = handler.recieveMessage(${routingKey}, $(content));
+              var state = handler.recieveMessage(routingKey, content);
               if(state) {
+            	logger.info("acknowledge");
             	channel.ack(message);  
               } else {
-            	logger.error(message);
+            	logger.error("unacknowledge");
+            	channel.nack(message);
               }
             });
           });
