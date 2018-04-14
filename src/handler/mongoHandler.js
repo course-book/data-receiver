@@ -1,6 +1,3 @@
-/**
- * 
- */
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -10,7 +7,7 @@ class MongoHandler {
     this.logger = logger;
   }
 
-  recieveMessage(routingKey, message) {
+  receiveMessage(routingKey, message) {
     return false;
   }
 }

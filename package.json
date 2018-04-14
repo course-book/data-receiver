@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "mongo": "node src/client.js mongo",
+    "riak": "node src/client.js riak",
+    "dev": "nodemon src/client.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +22,7 @@
     "amqplib": "^0.5.2",
     "basho-riak-client": "^2.4.0",
     "dotenv": "^5.0.1",
+    "moment": "^2.22.0",
     "simple-node-logger": "^0.93.37"
   },
   "devDependencies": {
