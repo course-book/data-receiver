@@ -7,6 +7,7 @@ class RiakHandler {
     this.logger = logger;
 
     this.receiveMessage.bind(this);
+    this.handleRegistration.bind(this);
   }
 
   stop(client) {
@@ -20,33 +21,47 @@ class RiakHandler {
   }
 
   receiveMessage(content) {
-    const client = new Riak.Client(this.nodes, (error, c) => {
-      if (error) {
-        this.logger.error("Failed to connect to Riak", error.message);
-        return;
-      }
-      this.logger.info("Successfully connected to Riak");
-
-      const now = moment();
-      const formatted = now.format("YYYY-MM-DD HH:mm:ss");
-      const datum = {
-        bucket: content.type,
-        key: formatted,
-        value: content
-      }
-      c.storeValue(datum, (error, result) => {
+    return new Promise((resolve, reject) => {
+      const client = new Riak.Client(this.nodes, (error, c) => {
         if (error) {
-          this.logger.error("Failed to store value", error.message);
-        } else {
-          this.logger.info("Successfully stored value ", result);
+          this.logger.error(`Failed to connect to Riak ${error}`);
+          reject(false);
+          return;
         }
-        this.stop(c);
+        this.logger.info("Successfully connected to Riak");
+
+        switch (content.type) {
+          case "REGISTRATION":
+            return this.handleRegistration(content, c)
+              .then((result) => resolve(result));
+          default:
+            this.logger.warn(`Unexpected type ${content.type}.`);
+            return Promise.resolve(true);
+        }
       });
     });
+  }
 
-    // Riak is for session data.
-    // It is ok to lose some.
-    return true;
+  handleRegistration(content, client) {
+    return new Promise((resolve, reject) => {
+      const datum = {
+        bucketType: "counters",
+        bucket: content.type,
+        key: content.ip,
+        increment: 1
+      };
+      client.updateCounter(datum, (error, result) => {
+        if (error) {
+          this.logger.error(`Failed to store value ${error}`);
+          this.stop(client);
+          resolve(false);
+        } else {
+          this.logger.info("Successfully stored value ", result);
+          this.stop(client);
+          resolve(true);
+        }
+      });
+    });
   }
 }
 
