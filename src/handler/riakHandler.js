@@ -30,7 +30,7 @@ class RiakHandler {
         }
         this.logger.info("Successfully connected to Riak");
 
-        switch (content.type) {
+        switch (content.action) {
           case "REGISTRATION":
             return this.handleRegistration(content, c)
               .then((result) => resolve(result));
@@ -46,7 +46,7 @@ class RiakHandler {
     return new Promise((resolve, reject) => {
       const datum = {
         bucketType: "counters",
-        bucket: content.type,
+        bucket: content.action,
         key: content.ip,
         increment: 1
       };
