@@ -56,43 +56,47 @@ class MongoHandler {
                   this.logger.info(body)
                 }
                 resolve(true);
+                return;
+              });
+            } else {
+              writeresult = userdb.insert(datum);
+              if (writeresult.nInserted == 1) {
+                request.post('http://433-12.csse.rose-hulman.edu:15672/#/', {
+                  json: {
+                    uuid: datum.uuid,
+                    statuscode: "200",
+                    message: "REGISTRATION_SUCCESS"
+                  }
+                }, (error, response, body) => {
+                  if (error) {
+                    this.logger.error(error.message)
+                  } else if (response.statusCode == 200) {
+                    this.logger.info(body)
+                  }
+                });
               } else {
-                writeresult = userdb.insert(datum);
-                if (writeresult.nInserted == 1) {
-                  request.post('http://433-12.csse.rose-hulman.edu:15672/#/', {
-                    json: {
-                      uuid: datum.uuid,
-                      statuscode: "200",
-                      message: "REGISTRATION_SUCCESS"
-                    }
-                  }, (error, response, body) => {
-                    if (error) {
-                      this.logger.error(error.message)
-                    } else if (response.statusCode == 200) {
-                      this.logger.info(body)
-                    }
-                  });
-                } else {
-                  request.post('http://433-12.csse.rose-hulman.edu:15672/#/', {
-                    json: {
-                      uuid: datum.uuid,
-                      statuscode: "500",
-                      message: "REGISTRATION_FAILURE"
-                    }
-                  }, (error, response, body) => {
-                    if (error) {
-                      this.logger.error(error.message)
-                    } else if (response.statusCode == 200) {
-                      this.logger.info(body)
-                    }
-                  });
-                }
-                resolve(true);
+                request.post('http://433-12.csse.rose-hulman.edu:15672/#/', {
+                  json: {
+                    uuid: datum.uuid,
+                    statuscode: "500",
+                    message: "REGISTRATION_FAILURE"
+                  }
+                }, (error, response, body) => {
+                  if (error) {
+                    this.logger.error(error.message)
+                  } else if (response.statusCode == 200) {
+                    this.logger.info(body)
+                  }
+                });
               }
-            )}
-          }
+              resolve(true);
+            }
+          default:
+            this.logger.warn(`Unexpected type ${content.action}.`);
+            return resolve(true);
         }
-    })
+      });
+    });
   }
 }
 
