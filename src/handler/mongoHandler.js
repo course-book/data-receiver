@@ -50,16 +50,28 @@ class MongoHandler {
 								  }
 						  resolve(true);
 					  } else {
-					  userdb.insert(datum);
-					  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
-							  { json: {uuid:datum.uuid, statuscode:"200",message:"REGISTRATION_SUCCESS"}},
-							  function (error, response, body) {
-								  if(!error && response.statusCode == 200) {
-									  this.logger.info(body)
-								  } else if (error) {
-									  this.logger.error(error.message)
+					  writeresult = userdb.insert(datum);
+					  if(writeresult.nInserted == 1) {
+						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
+								  { json: {uuid:datum.uuid, statuscode:"200",message:"REGISTRATION_SUCCESS"}},
+								  function (error, response, body) {
+									  if(!error && response.statusCode == 200) {
+										  this.logger.info(body)
+									  } else if (error) {
+										  this.logger.error(error.message)
+									  }
 								  }
-							  }
+					  } else {
+						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
+								  { json: {uuid:datum.uuid, statuscode:"500",message:"REGISTRATION_FAILURE"}},
+								  function (error, response, body) {
+									  if(!error && response.statusCode == 200) {
+										  this.logger.info(body)
+									  } else if (error) {
+										  this.logger.error(error.message)
+									  }
+								  } 
+					  }
 					  resolve(true);
 			  }
 			  }
