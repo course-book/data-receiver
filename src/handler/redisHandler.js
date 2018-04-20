@@ -9,7 +9,7 @@ class RedisHandler {
   }
 
   recieveMessage(routingKey, message) {
-    return false;
+    return true;
   }
 }
 

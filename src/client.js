@@ -20,6 +20,8 @@ if (routingKey === "riak") {
   handler = new RiakHandler(RIAK_NODES, logger);
 } else if (routingKey === "mongo") {
   handler = new MongoHandler(MONGO_HOST, logger);
+} else if (routingKey === "redis") {
+  handler = new RedisHandler(REDIS_HOST, logger); 
 }
 
 amqp.connect(RABBIT_HOST)
