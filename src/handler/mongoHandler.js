@@ -10,7 +10,7 @@ class MongoHandler {
   }
 
   receiveMessage(content) {
-	  return new Promise((resolve reject) => {
+	  return new Promise((resolve, reject) => {
 		  MongoClient.connect(this.host, (error, c) => {
 			  if(error) {
 				  this.logger.error("Could not connect to MongoClient", error.message);
