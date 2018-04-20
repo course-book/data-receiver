@@ -14,6 +14,15 @@ class MongoHandler {
 		  MongoClient.connect(this.host, (error, c) => {
 			  if(error) {
 				  this.logger.error("Could not connect to MongoClient", error.message);
+				  request.post('http://433-12.csse.rose-hulman.edu:15672/#/,
+						  { json: {uuid:content.uuid, statuscode:"100", message:'REGISTRATION_DOWN'}},
+						  function (error, response, body) {
+							  if(!error && response.statusCode == 200) {
+								  this.logger.info(body)
+							  } else if (error) {
+								  this.logger.error(error.message)
+							  }
+						  }
 				  resolve(false);
 				  return;
 			  } else {
@@ -22,15 +31,16 @@ class MongoHandler {
 			  
 			  const userdb = c.collection('users')
 			  
-			  switch (content.type) {
+			  switch (content.action) {
 				  case 'REGISTRATION':
 					  const datum = {
 						  username:content.username;
 						  password:content.password;
+					  	  uuid:content.uuid
 					  }
 					  if (userdb.find({"username":datum.username}).count() > 0) {
 						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/,
-								  { json: {success:'REGISTRATION_FAILURE'}},
+								  { json: {uuid:datum.uuid, statuscode:"400", message:'REGISTRATION_FAILURE'}},
 								  function (error, response, body) {
 									  if(!error && response.statusCode == 200) {
 										  this.logger.info(body)
@@ -42,7 +52,7 @@ class MongoHandler {
 					  } else {
 					  userdb.insert(datum);
 					  request.post('http://433-12.csse.rose-hulman.edu:15672/#/,
-							  { json: {success:'REGISTRATION_SUCCESS'}},
+							  { json: {uuid:datum.uuid, statuscode:"200",message:"REGISTRATION_SUCCESS"}},
 							  function (error, response, body) {
 								  if(!error && response.statusCode == 200) {
 									  this.logger.info(body)
