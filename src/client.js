@@ -41,23 +41,17 @@ amqp.connect(RABBIT_HOST)
               let content = message.content.toString();
               logger.info(`  [x] ${content}`);
 
-              let state = true;
               content = JSON.parse(content);
-              switch (content.type) {
-            	  case "REGISTRATION":
-            		  state = handler.receiveMessage(content);
-            		  break;
-        		    default:
-        			    logger.warn(message)
-              }
-
-              if (state) {
-                logger.info("Message acknowledged");
-                channel.ack(message);
-              } else {
-                logger.info("Message not acknowledged");
-                channel.nack(message);
-              }
+              handler.receiveMessage(content)
+                .then((result) => {
+                  if (result) {
+                    logger.info("Message acknowledged");
+                    channel.ack(message);
+                  } else {
+                    logger.info("Message not acknowledged");
+                    channel.nack(message);
+                  }
+                });
             });
           });
       });

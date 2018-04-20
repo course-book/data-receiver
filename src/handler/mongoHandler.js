@@ -28,8 +28,30 @@ class MongoHandler {
 						  username:content.username;
 						  password:content.password;
 					  }
+					  if (userdb.find({"username":datum.username}).count() > 0) {
+						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/,
+								  { json: {success:'REGISTRATION_FAILURE'}},
+								  function (error, response, body) {
+									  if(!error && response.statusCode == 200) {
+										  this.logger.info(body)
+									  } else if (error) {
+										  this.logger.error(error.message)
+									  }
+								  }
+						  resolve(true);
+					  } else {
 					  userdb.insert(datum);
+					  request.post('http://433-12.csse.rose-hulman.edu:15672/#/,
+							  { json: {success:'REGISTRATION_SUCCESS'}},
+							  function (error, response, body) {
+								  if(!error && response.statusCode == 200) {
+									  this.logger.info(body)
+								  } else if (error) {
+									  this.logger.error(error.message)
+								  }
+							  }
 					  resolve(true);
+			  }
 			  }
 		  })
 	  })

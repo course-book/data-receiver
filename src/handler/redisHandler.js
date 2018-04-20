@@ -8,8 +8,8 @@ class RedisHandler {
     this.logger = logger;
   }
 
-  recieveMessage(routingKey, message) {
-    return true;
+  recieveMessage(message) {
+    return Promise.resolve(true);
   }
 }
 
