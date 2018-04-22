@@ -36,7 +36,7 @@ class RiakHandler {
               .then((result) => resolve(result));
           default:
             this.logger.warn(`Unexpected type ${content.action}.`);
-            return Promise.resolve(true);
+            return resolve(true);
         }
       });
     });
