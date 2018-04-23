@@ -34,10 +34,10 @@ class MongoHandler {
 			  switch (content.action) {
 				  case 'REGISTRATION':
 					  const datum = {
-						  username:content.username;
-						  password:content.password;
-				  	  uuid:content.uuid;
-              action:"REGISTRATION";
+						  username:content.username,
+						  password:content.password,
+				  	  uuid:content.uuid,
+              action:"REGISTRATION"
 					  }
 					  if (userdb.find({"username":datum.username}).count() > 0) {
 						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
@@ -52,7 +52,7 @@ class MongoHandler {
 						  resolve(true);
 					  } else {
 					  writeresult = userdb.insert(datum);
-					  if(writeresult.nInserted == 1) {
+					  if (writeresult.nInserted == 1) {
 						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
 								  { json: {uuid:datum.uuid, statuscode:"200",message:"REGISTRATION_SUCCESS",username:datum.username, action:datum.action}},
 								  function (error, response, body) {
