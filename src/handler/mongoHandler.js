@@ -34,10 +34,10 @@ class MongoHandler {
 			  switch (content.action) {
 				  case 'REGISTRATION':
 					  const datum = {
-						  username:content.username;
-						  password:content.password;
-				  	  uuid:content.uuid;
-              action:"REGISTRATION";
+						  username:content.username,
+						  password:content.password,
+				  	  uuid:content.uuid,
+              action:"REGISTRATION"
 					  }
 					  if (userdb.find({"username":datum.username}).count() > 0) {
 						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
@@ -61,7 +61,7 @@ class MongoHandler {
 									  } else if (error) {
 										  this.logger.error(error.message)
 									  }
-								  }
+								  })
 					  } else {
 						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
 								  { json: {uuid:datum.uuid, statuscode:"500",message:"REGISTRATION_FAILURE",username:datum.username, action:datum.action}},
