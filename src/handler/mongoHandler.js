@@ -11,7 +11,7 @@ class MongoHandler {
 
   receiveMessage(content) {
 	  return new Promise((resolve, reject) => {
-		  MongoClient.connect(this.host, (error, c) => {
+		  MongoClient.connect(this.host, (error, client) => {
 			  if(error) {
 				  this.logger.error("Could not connect to MongoClient", error.message);
 				  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
@@ -29,7 +29,7 @@ class MongoHandler {
 				  this.logger.info("connected to MongoClient");
 			  }
 
-			  const userdb = c.collection('users')
+			  const userdb = client.db('coursebook').collection('users')
 
 			  switch (content.action) {
 				  case 'REGISTRATION':
@@ -51,8 +51,21 @@ class MongoHandler {
 								  })
 						  resolve(true);
 					  } else {
-					  writeresult = userdb.insert(datum);
-					  if (writeresult.nInserted == 1) {
+            const writeresult = userdb.updateOne(
+              {"username":datum.username},
+             {
+               $setOnInsert:
+                    {"username":datum.username, "password":datum.password, "reviews":[], "subscriptions":[]}
+             },
+                    {upsert: true}
+             )
+             writeresult.then((result) => {
+               console.log("\nThis is the json" + result + '\n')
+               result
+               //Result.upserted undefined for some reason
+               console.log("\n" + result.upserted)
+					  if (typeof result.upserted === "undefined") {
+              console.log("\nThe upsert existed!\n")
 						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
 								  { json: {uuid:datum.uuid, statuscode:"200",message:"REGISTRATION_SUCCESS",username:datum.username, action:datum.action}},
 								  function (error, response, body) {
@@ -63,6 +76,7 @@ class MongoHandler {
 									  }
 								  })
 					  } else {
+              console.log("\nThe bleh existed!\n")
 						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
 								  { json: {uuid:datum.uuid, statuscode:"500",message:"REGISTRATION_FAILURE",username:datum.username, action:datum.action}},
 								  function (error, response, body) {
@@ -74,6 +88,7 @@ class MongoHandler {
 								  })
 					  }
 					  resolve(true);
+           })
 			  }
 			  }
 		  })
