@@ -24,15 +24,15 @@ let server;
 switch (routingKey) {
   case "mongo":
     handler = new MongoHandler(MONGO_HOST, logger);
-    server = new MongoServer(8080, logger);
+    server = new MongoServer(8090, logger);
     break;
   case "redis":
     handler = new RedisHandler(REDIS_HOST, logger);
-    server = new RedisServer(8081, logger);
+    server = new RedisServer(8091, logger);
     break;
   case "riak":
     handler = new RiakHandler(RIAK_NODES, logger);
-    server = new RiakServer(8082, logger);
+    server = new RiakServer(8092, logger);
     break;
   default:
     throw new Error(`Unsupported routingKey ${routingKey}.`);
