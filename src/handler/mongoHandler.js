@@ -22,6 +22,10 @@ class MongoHandler {
               const userdb = client.db("coursebook").collection("users");
               this.handleRegistration(userdb, content, resolve);
               break;
+            case "COURSE_CREATE":
+              const userdb = client.db("coursebook").collection("courses");
+              this.handleCourseCreation(userdb, content, resolve);
+              break;
             default:
               this.logger.warn(`Unsupported action ${content.action}`);
               resolve(true);
@@ -41,6 +45,43 @@ class MongoHandler {
       }
     };
     this.respond(body, resolve);
+  }
+
+  handleCourseCreation(userdb, content, resolve) {
+    const searchQuery = {coursename: content.coursename, username: content.username};
+    const updateQuery = {
+      $setOnInsert: {
+        coursename: content.coursename,
+        username: content.username,
+        shortdesc: content.shortdescription,
+        description: content.description,
+        reviews: [],
+        wish: []
+       }
+    };
+    const options = {upsert: true};
+    userdb.updateOne(searchQuery, updateQuery, options)
+      .then((response) => {
+        const body = {
+            uuid: content.uuid,
+            username: content.username,
+            action: content.action
+        };
+        if(response.upsertedCount === 0) {
+          this.logger.info(`course ${content.coursename} by ${content.username} already exists`);
+          body.statusCode = 409;
+          body.message = "Course by that title already exists. Please try another.";
+        } else {
+          this.logger.info(`created course ${content.coursename} by ${content.username}`);
+          body.statusCode = 201;
+          body.message = "Course was successfully created.";
+        }
+        this.respond(body, resolve);
+      })
+      .catch((error) => {
+        this.logger.error(`Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
   }
 
   handleRegistration(userdb, content, resolve) {
