@@ -2,9 +2,12 @@ const express = require("express");
 const bodyParser = require("body-parser");
 
 class RedisServer {
-  constructor(port, logger) {
+  constructor(host, port, logger) {
+    this.host = host;
     this.port = port;
     this.logger = logger;
+
+    this.listen = this.listen.bind(this);
   }
 
   listen() {

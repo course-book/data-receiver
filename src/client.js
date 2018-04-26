@@ -13,6 +13,7 @@ dotenv.config();
 const MONGO_HOST = process.env.MONGO_HOST;
 const RABBIT_HOST = process.env.RABBITMQ_HOST;
 const RIAK_NODES = process.env.RIAK_NODES.split(",");
+const RESPONSE_ENDPOINT = process.env.RESPONSE_ENDPOINT;
 
 let logger = SimpleNodeLogger.createSimpleLogger();
 
@@ -23,16 +24,16 @@ let handler;
 let server;
 switch (routingKey) {
   case "mongo":
-    handler = new MongoHandler(MONGO_HOST, logger);
-    server = new MongoServer(8090, logger);
+    handler = new MongoHandler(MONGO_HOST, RESPONSE_ENDPOINT, logger);
+    server = new MongoServer(MONGO_HOST, 8090, logger);
     break;
   case "redis":
     handler = new RedisHandler(REDIS_HOST, logger);
-    server = new RedisServer(8091, logger);
+    server = new RedisServer(REDDIS_HOST, 8091, logger);
     break;
   case "riak":
     handler = new RiakHandler(RIAK_NODES, logger);
-    server = new RiakServer(8092, logger);
+    server = new RiakServer(RIAK_NODES, 8092, logger);
     break;
   default:
     throw new Error(`Unsupported routingKey ${routingKey}.`);

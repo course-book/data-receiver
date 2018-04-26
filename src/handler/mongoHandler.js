@@ -1,98 +1,99 @@
-const dotenv = require("dotenv");
 const MongoClient = require("mongodb");
-const request = require("request");
-dotenv.config();
+const rp = require("request-promise");
 
 class MongoHandler {
-  constructor(host, logger) {
+  constructor(host, responseEndpoint, logger) {
     this.host = host;
     this.logger = logger;
+    this.responseEndpoint = responseEndpoint;
+
+    this.handleMongoDown = this.handleMongoDown.bind(this);
+    this.respond = this.respond.bind(this);
   }
 
   receiveMessage(content) {
-	  return new Promise((resolve, reject) => {
-		  MongoClient.connect(this.host, (error, client) => {
-			  if(error) {
-				  this.logger.error("Could not connect to MongoClient", error.message);
-				  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
-						  { json: {uuid:content.uuid, statuscode:"100", message:'REGISTRATION_DOWN'}},
-						  function (error, response, body) {
-							  if(!error && response.statusCode == 200) {
-								  this.logger.info(body)
-							  } else if (error) {
-								  this.logger.error(error.message)
-							  }
-						  })
-				  resolve(false);
-				  return;
-			  } else {
-				  this.logger.info("connected to MongoClient");
-			  }
+    return new Promise((resolve, reject) => {
+      MongoClient.connect(this.host)
+        .then((client) => {
+          this.logger.info("connected to MongoClient");
 
-			  const userdb = client.db('coursebook').collection('users')
+          switch (content.action) {
+            case "REGISTRATION":
+              const userdb = client.db("coursebook").collection("users");
+              this.handleRegistration(userdb, content, resolve);
+              break;
+            default:
+              this.logger.warn(`Unsupported action ${content.action}`);
+              resolve(true);
+          }
+        })
+        .catch((error) => this.handleMongoDown(content, error, resolve));
+    });
+  }
 
-			  switch (content.action) {
-				  case 'REGISTRATION':
-					  const datum = {
-						  username:content.username,
-						  password:content.password,
-				  	  uuid:content.uuid,
-              action:"REGISTRATION"
-					  }
-					  if (userdb.find({"username":datum.username}).count() > 0) {
-						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
-								  { json: {uuid:datum.uuid, statuscode:"400", message:'REGISTRATION_FAILURE', username:datum.username, action:datum.action}},
-								  function (error, response, body) {
-									  if(!error && response.statusCode == 200) {
-										  this.logger.info(body)
-									  } else if (error) {
-										  this.logger.error(error.message)
-									  }
-								  })
-						  resolve(true);
-					  } else {
-            const writeresult = userdb.updateOne(
-              {"username":datum.username},
-             {
-               $setOnInsert:
-                    {"username":datum.username, "password":datum.password, "reviews":[], "subscriptions":[]}
-             },
-                    {upsert: true}
-             )
-             writeresult.then((result) => {
-               console.log("\nThis is the json" + result + '\n')
-               result
-               //Result.upserted undefined for some reason
-               console.log("\n" + result.upserted)
-					  if (typeof result.upserted === "undefined") {
-              console.log("\nThe upsert existed!\n")
-						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
-								  { json: {uuid:datum.uuid, statuscode:"200",message:"REGISTRATION_SUCCESS",username:datum.username, action:datum.action}},
-								  function (error, response, body) {
-									  if(!error && response.statusCode == 200) {
-										  this.logger.info(body)
-									  } else if (error) {
-										  this.logger.error(error.message)
-									  }
-								  })
-					  } else {
-              console.log("\nThe bleh existed!\n")
-						  request.post('http://433-12.csse.rose-hulman.edu:15672/#/',
-								  { json: {uuid:datum.uuid, statuscode:"500",message:"REGISTRATION_FAILURE",username:datum.username, action:datum.action}},
-								  function (error, response, body) {
-									  if(!error && response.statusCode == 200) {
-										  this.logger.info(body)
-									  } else if (error) {
-										  this.logger.error(error.message)
-									  }
-								  })
-					  }
-					  resolve(true);
-           })
-			  }
-			  }
-		  })
-	  })
+  handleMongoDown(content, error, resolve) {
+    this.logger.error(`Could not connect to MongoClient. Message: ${error.message}`);
+    const body = {
+      json: {
+        uuid: content.uuid,
+        statuscode: 102,
+        message: "Registration is down. The registration request will be processed once it is back up."
+      }
+    };
+    this.respond(body, resolve);
+  }
+
+  handleRegistration(userdb, content, resolve) {
+    const searchQuery = {username: content.username};
+    const updateQuery = {
+      $setOnInsert: {
+        username: content.username,
+        password: content.password,
+        reviews: [],
+        subscriptions: []
+      }
+    };
+    const options = {upsert: true};
+    userdb.updateOne(searchQuery, updateQuery, options)
+      .then((response) => {
+        const body = {
+          uuid: content.uuid,
+          username: content.username,
+          action: content.action
+        };
+        if (response.upsertedCount === 0) {
+          this.logger.info(`user ${content.username} already exists`);
+          body.statusCode = 409;
+          body.message = "Username already exists. Please try another.";
+        } else {
+          this.logger.info(`created user ${content.username}`);
+          body.statusCode = 201;
+          body.message = "User was successfully created.";
+        }
+        this.respond(body, resolve);
+      })
+      .catch((error) => {
+        this.logger.error(`Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
+  }
+
+  respond(body, resolve) {
+    const options = {
+      method: "POST",
+      uri: this.responseEndpoint,
+      body: body,
+      json: true
+    };
+    rp(options)
+      .then((body) => {
+        this.logger.info(`Response success.`);
+        resolve(true);
+      })
+      .catch((error) => {
+        this.logger.error(`Response error ${error.message}`);
+        resolve(false);
+      });
   }
 }
 
