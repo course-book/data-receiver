@@ -51,7 +51,7 @@ class MongoHandler {
     const searchQuery = {coursename: content.coursename, username: content.username};
     const updateQuery = {
       $setOnInsert: {
-        coursename: content.coursename,
+        name: content.name,
         username: content.username,
         shortdescription: content.shortdescription,
         description: content.description,
