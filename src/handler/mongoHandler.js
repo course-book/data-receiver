@@ -53,8 +53,9 @@ class MongoHandler {
       $setOnInsert: {
         coursename: content.coursename,
         username: content.username,
-        shortdesc: content.shortdescription,
+        shortdescription: content.shortdescription,
         description: content.description,
+        sources: content.sources
         reviews: [],
         wish: []
        }
