@@ -23,7 +23,7 @@ class MongoHandler {
               this.handleRegistration(userdb, content, resolve);
               break;
             case "COURSE_CREATE":
-              const userdb = client.db("coursebook").collection("courses");
+              const coursedb = client.db("coursebook").collection("courses");
               this.handleCourseCreation(userdb, content, resolve);
               break;
             default:
@@ -47,7 +47,7 @@ class MongoHandler {
     this.respond(body, resolve);
   }
 
-  handleCourseCreation(userdb, content, resolve) {
+  handleCourseCreation(coursedb, content, resolve) {
     const searchQuery = {coursename: content.coursename, username: content.username};
     const updateQuery = {
       $setOnInsert: {
@@ -61,7 +61,7 @@ class MongoHandler {
        }
     };
     const options = {upsert: true};
-    userdb.updateOne(searchQuery, updateQuery, options)
+    coursedb.updateOne(searchQuery, updateQuery, options)
       .then((response) => {
         const body = {
             uuid: content.uuid,
