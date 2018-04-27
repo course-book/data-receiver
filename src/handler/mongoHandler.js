@@ -24,7 +24,7 @@ class MongoHandler {
               break;
             case "COURSE_CREATE":
               const coursedb = client.db("coursebook").collection("courses");
-              this.handleCourseCreation(userdb, content, resolve);
+              this.handleCourseCreation(coursedb, content, resolve);
               break;
             default:
               this.logger.warn(`Unsupported action ${content.action}`);
@@ -48,14 +48,14 @@ class MongoHandler {
   }
 
   handleCourseCreation(coursedb, content, resolve) {
-    const searchQuery = {coursename: content.coursename, username: content.username};
+    const searchQuery = {name: content.name, author: content.author};
     const updateQuery = {
       $setOnInsert: {
         name: content.name,
-        username: content.username,
+        author: content.author,
         shortdescription: content.shortdescription,
         description: content.description,
-        sources: content.sources
+        sources: content.sources,
         reviews: [],
         wish: []
        }
@@ -65,15 +65,14 @@ class MongoHandler {
       .then((response) => {
         const body = {
             uuid: content.uuid,
-            username: content.username,
             action: content.action
         };
         if(response.upsertedCount === 0) {
-          this.logger.info(`course ${content.coursename} by ${content.username} already exists`);
+          this.logger.info(`course ${content.name} by ${content.author} already exists`);
           body.statusCode = 409;
           body.message = "Course by that title already exists. Please try another.";
         } else {
-          this.logger.info(`created course ${content.coursename} by ${content.username}`);
+          this.logger.info(`created course ${content.name} by ${content.author}`);
           body.statusCode = 201;
           body.message = "Course was successfully created.";
         }
