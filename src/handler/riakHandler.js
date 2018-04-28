@@ -12,12 +12,12 @@ class RiakHandler {
     this.updateCounter = this.updateCounter.bind(this);
   }
 
-  stop(client) {
+  stop(logTag, client) {
     client.stop((error, result) => {
       if (error) {
-        this.logger.error("Failed to stop Riak client", error.message);
+        this.logger.error(`[ ${logTag} ] failed to stop Riak client: ${error.message}`);
       } else {
-        this.logger.info("Successfully stopped Riak client");
+        this.logger.info(`[ ${logTag} ] successfully stopped Riak client: ${result}`);
       }
     });
   }
@@ -35,7 +35,8 @@ class RiakHandler {
 
         switch (content.action) {
           case "LOGIN":
-            return this.handleLogin(content, c);
+            return this.handleLogin(content, c)
+              .then((result) => resolve(result));
           case "REGISTRATION":
             return this.handleRegistration(content, c)
               .then((result) => resolve(result));
@@ -43,7 +44,7 @@ class RiakHandler {
             return this.handleCourseCreate(content, c)
               .then((result) => resolve(result));
           default:
-            this.logger.warn(`Unexpected type ${content.action}.`);
+            this.logger.warn(`[ RIAK ] Unexpected type ${content.action}.`);
             return resolve(true);
         }
       });
@@ -52,6 +53,8 @@ class RiakHandler {
 
   handleLogin(content, client) {
     return new Promise((resolve, reject) => {
+      const logTag = "LOGIN";
+      this.logger.info(`[ ${logTag} ] handling login`);
       const mapOp = new Riak.Commands.CRDT.UpdateMap.MapOperation();
       mapOp.incrementCounter(content.username, 1);
       const datum = {
@@ -63,13 +66,13 @@ class RiakHandler {
       client.updateMap(datum, (error, result) => {
         let status;
         if (error) {
-          this.logger.error(`Failed to store value ${error}`);
+          this.logger.error(`[ ${logTag} ] failed to store value ${error}`);
           status = false;
         } else {
-          this.logger.info(`Successfully stored value ${JSON.stringify(result)}`);
+          this.logger.info(`[ ${logTag} ] successfully stored value ${JSON.stringify(result)}`);
           status = true;
         }
-        this.stop(client);
+        this.stop(logTag, client);
         resolve(status);
       });
     });
@@ -77,40 +80,42 @@ class RiakHandler {
 
   handleRegistration(content, client) {
     return new Promise((resolve, reject) => {
+      const logTag = "REGISTRATION";
       const datum = {
         bucketType: "counters",
         bucket: content.action,
         key: content.ip,
         increment: 1
       };
-      this.updateCounter(client, datum, resolve, reject);
+      this.updateCounter(logTag, client, datum, resolve, reject);
     });
   }
 
   handleCourseCreate(content, client) {
     return new Promise((resolve, reject) => {
+      const logTag = "COURSE";
       const datum = {
         bucketType: "counters",
         bucket: content.action,
         key: content.username,
         increment: 1
       };
-      this.updateCounter(client, datum, resolve, reject);
+      this.updateCounter(logTag, client, datum, resolve, reject);
     });
   }
 
-  updateCounter(client, datum, resolve, reject) {
+  updateCounter(logTag, client, datum, resolve, reject) {
     // NOTE: resolve is a Promise resolve callback.
     client.updateCounter(datum, (error, result) => {
       let status;
       if (error) {
-        this.logger.error(`Failed to store value ${error}`);
+        this.logger.error(`[ ${logTag} ] failed to store value ${error}`);
         status = false;
       } else {
-        this.logger.info(`Successfully stored value ${JSON.stringify(result)}`);
+        this.logger.info(`[ ${logTag} ] successfully stored value ${JSON.stringify(result)}`);
         status = true;
       }
-      this.stop(client);
+      this.stop(logTag, client);
       resolve(status);
     });
   }
