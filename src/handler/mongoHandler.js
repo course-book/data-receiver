@@ -15,7 +15,7 @@ class MongoHandler {
     return new Promise((resolve, reject) => {
       MongoClient.connect(this.host)
         .then((client) => {
-          this.logger.info("connected to MongoClient");
+          this.logger.info("[ MONGO ] connected to client");
 
           switch (content.action) {
             case "REGISTRATION":
@@ -36,7 +36,7 @@ class MongoHandler {
   }
 
   handleMongoDown(content, error, resolve) {
-    this.logger.error(`Could not connect to MongoClient. Message: ${error.message}`);
+    this.logger.error(`[ DOWN ] Could not connect to MongoClient. Message: ${error.message}`);
     const body = {
       json: {
         uuid: content.uuid,
@@ -44,10 +44,11 @@ class MongoHandler {
         message: "Registration is down. The registration request will be processed once it is back up."
       }
     };
-    this.respond(body, resolve);
+    this.respond(logTag, body, resolve);
   }
 
   handleRegistration(userdb, content, resolve) {
+    const logTag = "REGISTRATION";
     const searchQuery = {username: content.username};
     const updateQuery = {
       $setOnInsert: {
@@ -66,23 +67,25 @@ class MongoHandler {
           action: content.action
         };
         if (response.upsertedCount === 0) {
-          this.logger.info(`user ${content.username} already exists`);
+          this.logger.info(`[ ${logTag} ] user ${content.username} already exists`);
           body.statusCode = 409;
           body.message = "Username already exists. Please try another.";
         } else {
-          this.logger.info(`created user ${content.username}`);
+          this.logger.info(`[ ${logTag} ] created user ${content.username}`);
           body.statusCode = 201;
           body.message = "User was successfully created.";
         }
-        this.respond(body, resolve);
+        this.respond(logTag, body, resolve);
       })
       .catch((error) => {
-        this.logger.error(`Mongo failed update query: ${JSON.stringify(error.message)}`);
+        this.logger.error(`[ ${logTag} ] mongo failed update query: ${JSON.stringify(error.message)}`);
         resolve(false);
       });
   }
 
   handleCourseCreation(coursedb, content, resolve) {
+    const logTag = "COURSE"
+    this.logger.info(`[ ${logTag} ] handling course creation`);
     const searchQuery = {name: content.name, author: content.author};
     const updateQuery = {
       $setOnInsert: {
@@ -102,24 +105,24 @@ class MongoHandler {
             uuid: content.uuid,
             action: content.action
         };
-        if(response.upsertedCount === 0) {
-          this.logger.info(`course ${content.name} by ${content.author} already exists`);
+        if (response.upsertedCount === 0) {
+          this.logger.info(`[ ${logTag} ] course ${content.name} by ${content.author} already exists`);
           body.statusCode = 409;
           body.message = "Course by that title already exists. Please try another.";
         } else {
-          this.logger.info(`created course ${content.name} by ${content.author}`);
+          this.logger.info(`[ ${logTag} ] created course ${content.name} by ${content.author}`);
           body.statusCode = 201;
           body.message = "Course was successfully created.";
         }
-        this.respond(body, resolve);
+        this.respond(logTag, body, resolve);
       })
       .catch((error) => {
-        this.logger.error(`Mongo failed update query: ${JSON.stringify(error.message)}`);
+        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
         resolve(false);
       });
   }
 
-  respond(body, resolve) {
+  respond(logTag, body, resolve) {
     const options = {
       method: "POST",
       uri: this.responseEndpoint,
@@ -128,11 +131,11 @@ class MongoHandler {
     };
     rp(options)
       .then((body) => {
-        this.logger.info(`Response success.`);
+        this.logger.info(`[ ${logTag} ] response success.`);
         resolve(true);
       })
       .catch((error) => {
-        this.logger.error(`Response error ${error.message}`);
+        this.logger.error(`[ ${logTag} ] response error ${error.message}`);
         resolve(false);
       });
   }
