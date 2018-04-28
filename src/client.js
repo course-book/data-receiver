@@ -2,12 +2,12 @@ const amqp = require("amqplib");
 const dotenv = require("dotenv");
 const SimpleNodeLogger = require("simple-node-logger");
 
-const MongoHandler = require("./handler/mongoHandler");
-const MongoServer = require("./server/mongoServer");
-const RedisHandler = require("./handler/redisHandler");
-const RedisServer = require("./server/redisServer");
-const RiakHandler = require("./handler/riakHandler");
-const RiakServer = require("./server/riakServer");
+const MongoHandler = require("./handler/MongoHandler");
+const MongoServer = require("./server/MongoServer");
+const RedisHandler = require("./handler/RedisHandler");
+const RedisServer = require("./server/RedisServer");
+const RiakHandler = require("./handler/RiakHandler");
+const RiakServer = require("./server/RiakServer");
 dotenv.config();
 
 const MONGO_HOST = process.env.MONGO_HOST;

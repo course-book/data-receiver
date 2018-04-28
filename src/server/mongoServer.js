@@ -18,11 +18,12 @@ class MongoServer {
 
     // TODO: specify endpoints
     app.post("/login", (request, response) => {
+      const logTag = "LOGIN";
       const body = request.body;
       const username = body.username;
       const password = body.password;
 
-      this.logger.info(`[ LOGIN ] ${request.ip}`);
+      this.logger.info(`[ ${logTag} ] ${request.ip}`);
 
       MongoClient.connect(this.host)
         .then((client) => {
@@ -30,9 +31,10 @@ class MongoServer {
           const searchQuery = {username, password};
           userdb.findOne(searchQuery)
             .then((mongoResponse) => {
-              this.logger.info(`[ LOGIN ] ${JSON.stringify(mongoResponse)}`);
+              this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+              let body;
               if (mongoResponse) {
-                const body = {
+                body = {
                   authorized: true,
                   statusCode: 200,
                   message: `User authorized.`
@@ -40,17 +42,17 @@ class MongoServer {
                 response.status(200)
                   .send(body);
               } else {
-                const body = {
+                body = {
                   authorized: false,
                   statusCode: 401,
                   message: `Username or password is incorrect.`
                 };
-                response.status(200)
-                  .send(body);
               }
+              response.status(200)
+                .send(body);
             })
             .catch((error) => {
-              this.logger.error(`[ LOGIN ] ${error.message}`);
+              this.logger.error(`[ ${logTag} ] ${error.message}`);
               const body = {
                 authorized: false,
                 statusCode: 500,
@@ -58,6 +60,31 @@ class MongoServer {
               };
               response.status(200)
                 .send(body);
+            });
+        });
+    });
+
+    app.get("/course/:id", (request, response) => {
+      const logTag = "COURSE";
+      const courseId = request.params.id;
+
+      this.logger.info(`[ ${logTag} ] retrieving course with id ${courseId}`);
+      MongoClient.connect(this.host)
+        .then((client) => {
+          const coursedb = client.db("coursebook").collection("courses");
+          const objectId = new MongoClient.ObjectId(courseId);
+          const searchQuery = {_id: objectId};
+          coursedb.findOne(searchQuery)
+            .then((mongoResponse) => {
+              this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+              response.status(200);
+            })
+            .catch((error) => {
+              this.logger.error(`[ ${logTag} ] ${error.message}`);
+              const body = {
+                statusCode: 500,
+                message: `There was an issue looking up for course with id ${courseId}`
+              };
             });
         });
     });

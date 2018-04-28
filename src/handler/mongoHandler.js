@@ -47,6 +47,41 @@ class MongoHandler {
     this.respond(body, resolve);
   }
 
+  handleRegistration(userdb, content, resolve) {
+    const searchQuery = {username: content.username};
+    const updateQuery = {
+      $setOnInsert: {
+        username: content.username,
+        password: content.password,
+        reviews: [],
+        subscriptions: []
+      }
+    };
+    const options = {upsert: true};
+    userdb.updateOne(searchQuery, updateQuery, options)
+      .then((response) => {
+        const body = {
+          uuid: content.uuid,
+          username: content.username,
+          action: content.action
+        };
+        if (response.upsertedCount === 0) {
+          this.logger.info(`user ${content.username} already exists`);
+          body.statusCode = 409;
+          body.message = "Username already exists. Please try another.";
+        } else {
+          this.logger.info(`created user ${content.username}`);
+          body.statusCode = 201;
+          body.message = "User was successfully created.";
+        }
+        this.respond(body, resolve);
+      })
+      .catch((error) => {
+        this.logger.error(`Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
+  }
+
   handleCourseCreation(coursedb, content, resolve) {
     const searchQuery = {name: content.name, author: content.author};
     const updateQuery = {
@@ -75,41 +110,6 @@ class MongoHandler {
           this.logger.info(`created course ${content.name} by ${content.author}`);
           body.statusCode = 201;
           body.message = "Course was successfully created.";
-        }
-        this.respond(body, resolve);
-      })
-      .catch((error) => {
-        this.logger.error(`Mongo failed update query: ${JSON.stringify(error.message)}`);
-        resolve(false);
-      });
-  }
-
-  handleRegistration(userdb, content, resolve) {
-    const searchQuery = {username: content.username};
-    const updateQuery = {
-      $setOnInsert: {
-        username: content.username,
-        password: content.password,
-        reviews: [],
-        subscriptions: []
-      }
-    };
-    const options = {upsert: true};
-    userdb.updateOne(searchQuery, updateQuery, options)
-      .then((response) => {
-        const body = {
-          uuid: content.uuid,
-          username: content.username,
-          action: content.action
-        };
-        if (response.upsertedCount === 0) {
-          this.logger.info(`user ${content.username} already exists`);
-          body.statusCode = 409;
-          body.message = "Username already exists. Please try another.";
-        } else {
-          this.logger.info(`created user ${content.username}`);
-          body.statusCode = 201;
-          body.message = "User was successfully created.";
         }
         this.respond(body, resolve);
       })

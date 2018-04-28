@@ -4,18 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "riak": "node src/client.js riak",
-    "devRiak": "nodemon src/client.js riak",
-    "mongo": "node src/client.js mongo",
+    "riak": "node src/Client.js riak",
+    "devRiak": "nodemon src/Client.js riak",
+    "mongo": "node src/Client.js mongo",
     "devMongo": "nodemon src/client.js mongo",
-    "redis": "node src/client.js redis",
-    "devRedis": "nodemon src/client.js redis"
+    "redis": "node src/Client.js redis",
+    "devRedis": "nodemon src/Client.js redis"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/course-book/data-receiver.git"
   },
-  "author": "",
+  "author": "David Lam, Krystal Yang, Zachary Taylor",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/course-book/data-receiver/issues"

@@ -6,6 +6,7 @@ class RiakHandler {
     this.logger = logger;
 
     this.receiveMessage = this.receiveMessage.bind(this);
+    this.handleLogin = this.handleLogin.bind(this);
     this.handleRegistration = this.handleRegistration.bind(this);
     this.handleCourseCreate = this.handleCourseCreate.bind(this);
     this.updateCounter = this.updateCounter.bind(this);
@@ -22,6 +23,7 @@ class RiakHandler {
   }
 
   receiveMessage(content) {
+    this.logger.info(content);
     return new Promise((resolve, reject) => {
       const client = new Riak.Client(this.nodes, (error, c) => {
         if (error) {
@@ -32,6 +34,8 @@ class RiakHandler {
         this.logger.info("Successfully connected to Riak");
 
         switch (content.action) {
+          case "LOGIN":
+            return this.handleLogin(content, c);
           case "REGISTRATION":
             return this.handleRegistration(content, c)
               .then((result) => resolve(result));
@@ -42,6 +46,31 @@ class RiakHandler {
             this.logger.warn(`Unexpected type ${content.action}.`);
             return resolve(true);
         }
+      });
+    });
+  }
+
+  handleLogin(content, client) {
+    return new Promise((resolve, reject) => {
+      const mapOp = new Riak.Commands.CRDT.UpdateMap.MapOperation();
+      mapOp.incrementCounter(username, 1);
+      const datum = {
+        bucketType: "maps",
+        bucket: content.action,
+        key: content.ip,
+        op: mapOp
+      };
+      client.updateMap(options, (error, result) => {
+        let status;
+        if (error) {
+          this.logger.error(`Failed to store value ${error}`);
+          status = false;
+        } else {
+          this.logger.info(`Successfully stored value ${JSON.stringify(result)}`);
+          status = true;
+        }
+        this.stop(client);
+        resolve(status);
       });
     });
   }

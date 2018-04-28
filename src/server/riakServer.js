@@ -16,7 +16,8 @@ class RiakServer {
     app.use(bodyParser.urlencoded({extended: false}));
 
     app.get("/ping", (request, response) => {
-      this.logger.info("[ GET ] ping request");
+      const logTag = "PING";
+      this.logger.info(`[ ${logTag} ] ping request`);
       response.status(200).send("pong");
     });
 
