@@ -40,6 +40,8 @@ switch (routingKey) {
     break;
 }
 
+const logTag = "CLIENT";
+
 amqp.connect(RABBIT_HOST)
   .then((connection) => {
     connection.createChannel()
@@ -49,22 +51,22 @@ amqp.connect(RABBIT_HOST)
         channel.assertExchange(exchange, "direct");
         channel.assertQueue(`${exchange}.${routingKey}`)
           .then((q) => {
-            logger.info(`Waiting for messages on ${routingKey}. To exit press CTRL+C`);
+            logger.info(`[ ${logTag} ] waiting for messages on ${routingKey}. To exit press CTRL+C`);
             channel.bindQueue(q.queue, exchange, routingKey);
 
             channel.consume(q.queue, (message) => {
               logger.info(message);
               let content = message.content.toString();
-              logger.info(`Received Content: ${content}`);
+              logger.info(`[ ${logTag} ] received content: ${content}`);
 
               content = JSON.parse(content);
               handler.receiveMessage(content)
                 .then((result) => {
                   if (result) {
-                    logger.info("Message acknowledged");
+                    logger.info(`[ ${logTag} ] message acknowledged`);
                     channel.ack(message);
                   } else {
-                    logger.info("Message not acknowledged");
+                    logger.info(`[ ${logTag} ] message not acknowledged`);
                     channel.nack(message);
                   }
                 });

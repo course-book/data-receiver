@@ -91,7 +91,7 @@ class MongoHandler {
       $setOnInsert: {
         name: content.name,
         author: content.author,
-        shortdescription: content.shortdescription,
+        shortDescription: content.shortDescription,
         description: content.description,
         sources: content.sources,
         reviews: [],
@@ -131,7 +131,7 @@ class MongoHandler {
     };
     rp(options)
       .then((body) => {
-        this.logger.info(`[ ${logTag} ] response success.`);
+        this.logger.info(`[ ${logTag} ] response success: ${body}`);
         resolve(true);
       })
       .catch((error) => {

@@ -23,10 +23,10 @@ class RiakServer {
 
     app.listen(this.port, (error) => {
       if (error) {
-        this.logger.error(`Failed to start server: ${error.message}`);
+        this.logger.error(`[ INIT ] failed to start server: ${error.message}`);
         return;
       } else {
-        this.logger.info(`RiakServer LIVE on port ${this.port}`);
+        this.logger.info(`[ INIT ] RiakServer LIVE on port ${this.port}`);
       }
     });
   }

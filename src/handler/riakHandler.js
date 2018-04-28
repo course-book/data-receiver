@@ -9,6 +9,7 @@ class RiakHandler {
     this.handleLogin = this.handleLogin.bind(this);
     this.handleRegistration = this.handleRegistration.bind(this);
     this.handleCourseCreate = this.handleCourseCreate.bind(this);
+    this.handleCourseFetchOrUpdate = this.handleCourseFetchOrUpdate.bind(this);
     this.updateCounter = this.updateCounter.bind(this);
   }
 
@@ -27,7 +28,7 @@ class RiakHandler {
     return new Promise((resolve, reject) => {
       const client = new Riak.Client(this.nodes, (error, c) => {
         if (error) {
-          this.logger.error(`Failed to connect to Riak ${error}`);
+          this.logger.error(`[ RIAK ] failed to connect: ${error}`);
           reject(false);
           return;
         }
@@ -43,6 +44,11 @@ class RiakHandler {
           case "COURSE_CREATE":
             return this.handleCourseCreate(content, c)
               .then((result) => resolve(result));
+          case "COURSE_FETCH":
+          case "COURSE_UPDATE":
+            return this.handleCourseFetchOrUpdate(content, c)
+              .then((result) => resolve(result));
+            break;
           default:
             this.logger.warn(`[ RIAK ] Unexpected type ${content.action}.`);
             return resolve(true);
@@ -97,7 +103,20 @@ class RiakHandler {
       const datum = {
         bucketType: "counters",
         bucket: content.action,
-        key: content.username,
+        key: content.username, // main difference
+        increment: 1
+      };
+      this.updateCounter(logTag, client, datum, resolve, reject);
+    });
+  }
+
+  handleCourseFetchOrUpdate(content, client) {
+    return new Promise((resolve, reject) => {
+      const logTag = "COURSE";
+      const datum = {
+        bucketType: "counters",
+        bucket: content.action,
+        key: content.courseId,
         increment: 1
       };
       this.updateCounter(logTag, client, datum, resolve, reject);

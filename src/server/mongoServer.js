@@ -77,7 +77,12 @@ class MongoServer {
           coursedb.findOne(searchQuery)
             .then((mongoResponse) => {
               this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
-              response.status(200);
+              const body = {
+                statusCode: 200,
+                message: mongoResponse
+              };
+              response.status(200)
+                .send(body);
             })
             .catch((error) => {
               this.logger.error(`[ ${logTag} ] ${error.message}`);
@@ -85,16 +90,18 @@ class MongoServer {
                 statusCode: 500,
                 message: `There was an issue looking up for course with id ${courseId}`
               };
+              response.send(200)
+                .json(body);
             });
         });
     });
 
     app.listen(this.port, (error) => {
       if (error) {
-        this.logger.error(`Failed to start server: ${error.message}`);
+        this.logger.error(`[ INIT ] failed to start server: ${error.message}`);
         return;
       } else {
-        this.logger.info(`MongoServer LIVE on port ${this.port}`);
+        this.logger.info(`[ INIT ] mongo server LIVE on port ${this.port}`);
       }
     });
   }
