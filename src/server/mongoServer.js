@@ -39,8 +39,6 @@ class MongoServer {
                   statusCode: 200,
                   message: `User authorized.`
                 };
-                response.status(200)
-                  .send(body);
               } else {
                 body = {
                   authorized: false,
@@ -90,8 +88,8 @@ class MongoServer {
                 statusCode: 500,
                 message: `There was an issue looking up for course with id ${courseId}`
               };
-              response.send(200)
-                .json(body);
+              response.status(200)
+                .send(body);
             });
         });
     });

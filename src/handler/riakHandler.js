@@ -10,6 +10,7 @@ class RiakHandler {
     this.handleRegistration = this.handleRegistration.bind(this);
     this.handleCourseCreate = this.handleCourseCreate.bind(this);
     this.handleCourseFetchOrUpdate = this.handleCourseFetchOrUpdate.bind(this);
+    this.handleWishCreate = this.handleWishCreate.bind(this);
     this.updateCounter = this.updateCounter.bind(this);
   }
 
@@ -49,6 +50,9 @@ class RiakHandler {
             return this.handleCourseFetchOrUpdate(content, c)
               .then((result) => resolve(result));
             break;
+          case "WISH_CREATE":
+            return this.handleWishCreate(content, c)
+              .then((result) => resolve(result));
           default:
             this.logger.warn(`[ RIAK ] Unexpected type ${content.action}.`);
             return resolve(true);
@@ -103,7 +107,7 @@ class RiakHandler {
       const datum = {
         bucketType: "counters",
         bucket: content.action,
-        key: content.username, // main difference
+        key: content.username, // main difference between fetch and update
         increment: 1
       };
       this.updateCounter(logTag, client, datum, resolve, reject);
@@ -117,6 +121,19 @@ class RiakHandler {
         bucketType: "counters",
         bucket: content.action,
         key: content.courseId,
+        increment: 1
+      };
+      this.updateCounter(logTag, client, datum, resolve, reject);
+    });
+  }
+
+  handleWishCreate(content, client) {
+    return new Promise((resolve, reject) => {
+      const logTag = "WISH";
+      const datum = {
+        bucketType: "counters",
+        bucket: content.action,
+        key: content.username,
         increment: 1
       };
       this.updateCounter(logTag, client, datum, resolve, reject);
