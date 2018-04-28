@@ -8,9 +8,8 @@ class RiakHandler {
     this.receiveMessage = this.receiveMessage.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
     this.handleRegistration = this.handleRegistration.bind(this);
-    this.handleCourseCreate = this.handleCourseCreate.bind(this);
-    this.handleCourseFetchOrUpdate = this.handleCourseFetchOrUpdate.bind(this);
-    this.handleWishCreate = this.handleWishCreate.bind(this);
+    this.handleCreateOrDelete = this.handleCreateOrDelete.bind(this);
+    this.handleFetchOrUpdate = this.handleFetchOrUpdate.bind(this);
     this.updateCounter = this.updateCounter.bind(this);
   }
 
@@ -43,16 +42,20 @@ class RiakHandler {
             return this.handleRegistration(content, c)
               .then((result) => resolve(result));
           case "COURSE_CREATE":
-            return this.handleCourseCreate(content, c)
+          case "COURSE_DELETE":
+            return this.handleCreateOrDelete("COURSE", content, c)
               .then((result) => resolve(result));
           case "COURSE_FETCH":
           case "COURSE_UPDATE":
-            return this.handleCourseFetchOrUpdate(content, c)
+            return this.handleFetchOrUpdate("COURSE", content, c)
               .then((result) => resolve(result));
-            break;
           case "WISH_CREATE":
-            return this.handleWishCreate(content, c)
+          case "WISH_DELETE":
+            return this.handleCreateOrDelete("WISH", content, c)
               .then((result) => resolve(result));
+          case "WISH_UPDATE":
+          case "WISH_FETCH":
+            return this.handleFetchOrUpdate("WISH", content, c);
           default:
             this.logger.warn(`[ RIAK ] Unexpected type ${content.action}.`);
             return resolve(true);
@@ -101,39 +104,24 @@ class RiakHandler {
     });
   }
 
-  handleCourseCreate(content, client) {
+  handleCreateOrDelete(logTag, content, client) {
     return new Promise((resolve, reject) => {
-      const logTag = "COURSE";
-      const datum = {
-        bucketType: "counters",
-        bucket: content.action,
-        key: content.username, // main difference between fetch and update
-        increment: 1
-      };
-      this.updateCounter(logTag, client, datum, resolve, reject);
-    });
-  }
-
-  handleCourseFetchOrUpdate(content, client) {
-    return new Promise((resolve, reject) => {
-      const logTag = "COURSE";
-      const datum = {
-        bucketType: "counters",
-        bucket: content.action,
-        key: content.courseId,
-        increment: 1
-      };
-      this.updateCounter(logTag, client, datum, resolve, reject);
-    });
-  }
-
-  handleWishCreate(content, client) {
-    return new Promise((resolve, reject) => {
-      const logTag = "WISH";
       const datum = {
         bucketType: "counters",
         bucket: content.action,
         key: content.username,
+        increment: 1
+      };
+      this.updateCounter(logTag, client, datum, resolve, reject);
+    });
+  }
+
+  handleFetchOrUpdate(logTag, content, client) {
+    return new Promise((resolve, reject) => {
+      const datum = {
+        bucketType: "counters",
+        bucket: content.action,
+        key: content.id,
         increment: 1
       };
       this.updateCounter(logTag, client, datum, resolve, reject);
