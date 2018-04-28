@@ -53,14 +53,14 @@ class RiakHandler {
   handleLogin(content, client) {
     return new Promise((resolve, reject) => {
       const mapOp = new Riak.Commands.CRDT.UpdateMap.MapOperation();
-      mapOp.incrementCounter(username, 1);
+      mapOp.incrementCounter(content.username, 1);
       const datum = {
         bucketType: "maps",
         bucket: content.action,
         key: content.ip,
         op: mapOp
       };
-      client.updateMap(options, (error, result) => {
+      client.updateMap(datum, (error, result) => {
         let status;
         if (error) {
           this.logger.error(`Failed to store value ${error}`);
