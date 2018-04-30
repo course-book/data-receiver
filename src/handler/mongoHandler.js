@@ -27,15 +27,15 @@ class MongoHandler {
               this.handleCourseCreation(coursedb, content, resolve);
               break;
             case "WISH_CREATE":
-              const wishdb = client.db("coursebook").collection("wish");
+              const wishdb = client.db("coursebook").collection("wishes");
               this.handleWishCreation(wishdb, content, resolve);
               break;
             case "WISH_UPDATE":
-              const wishdb = client.db("coursebook").collection("wish");
+              const wishdb = client.db("coursebook").collection("wishes");
               this.handleWishUpdate(wishdb, content, resolve);
               break;
             case "WISH_DELETE":
-              const wishdb = client.db("coursebook").collection("wish");
+              const wishdb = client.db("coursebook").collection("wishes");
               this.handleWishDelete(wishdb, content, resolve);
               break;
             default:
@@ -61,20 +61,13 @@ class MongoHandler {
     const options = {upsert: true};
     coursedb.updateOne(searchQuery, updateQuery, options)
       .then((response) => {
-        const body = {
-            uuid: content.uuid,
-            action: content.action
-        };
         if (response.upsertedCount === 0) {
           this.logger.info(`[ ${logTag} ] wish ${content.name} by ${content.wisher} already exists`);
-          body.statusCode = 409;
-          body.message = "Wish by that name and author already exists. Please try another.";
+          resolve(false);
         } else {
           this.logger.info(`[ ${logTag} ] created wish ${content.name} by ${content.wisher}`);
-          body.statusCode = 201;
-          body.message = "Wish was successfully created.";
+          resolve(true);
         }
-        this.respond(logTag, body, resolve);
       })
       .catch((error) => {
         this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
@@ -95,18 +88,12 @@ class MongoHandler {
     const options = {upsert: false};
     coursedb.updateOne(searchQuery, updateQuery, options)
       .then((response) => {
-        const body = {
-            uuid: content.uuid,
-            action: content.action
-        };
         if (response.modifiedCount === 0) {
           this.logger.info(`[ ${logTag} ] wish ${content.name} by ${content.wisher} doesn't exist with id ${content.wishId}`);
-          body.statusCode = 409;
-          body.message = "Wish by that ID does not exist. Please try another.";
+          resolve(false);
         } else {
           this.logger.info(`[ ${logTag} ] Updated wish ${content.name} by ${content.wisher} with id ${content.wishId}`);
-          body.statusCode = 201;
-          body.message = "Wish was successfully updated.";
+          resolve(true);
         }
         this.respond(logTag, body, resolve);
       })
@@ -122,18 +109,12 @@ class MongoHandler {
     const searchQuery = {_id : content.wishId};
     coursedb.deleteOne(searchQuery)
       .then((response) => {
-        const body = {
-            uuid: content.uuid,
-            action: content.action
-        };
         if (response.deletedCount === 0) {
           this.logger.info(`[ ${logTag} ] Wish with id ${content.wishId} does not exist`);
-          body.statusCode = 409;
-          body.message = "Wish by that ID does not exist, please try again.";
+          resolve(false);
         } else {
           this.logger.info(`[ ${logTag} ] Deleted wish with id ${content.wishId}`);
-          body.statusCode = 201;
-          body.message = "Wish was successfully deleted.";
+          resolve(true);
         }
         this.respond(logTag, body, resolve);
       })
