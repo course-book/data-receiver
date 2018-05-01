@@ -47,6 +47,44 @@ class MongoHandler {
     });
   }
 
+  handleMongoCreate(db, content, resolve, logTag, searchQuery, updateQuery, callback) {
+    const logTag = logTag
+    this.logger.info(`[ ${logTag} ] handling ${content.action}`);
+    const options = {upsert: true};
+    coursedb.updateOne(searchQuery, updateQuery, options)
+      .then((response) => {
+        if (response.upsertedCount === 0) {
+          this.logger.info(`[ ${logTag} ] failMessage`);
+          resolve(false);
+        } else {
+          this.logger.info(`[ ${logTag} ] passMessage`);
+          resolve(true);
+        }
+      })
+      .catch((error) => {
+        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
+  }
+
+  handleMongoRemove(db, content, resolve, logTag, searchQuery, failMessage, passMessage) {
+      const logTag = logTag
+      this.logger.info(`[ ${logTag} ] handling ${content.action}`);
+      coursedb.deleteOne(searchQuery)
+        .then((response) => {
+          if (response.deletedCount === 0) {
+            this.logger.info(`[ ${logTag} ] failMessage`);
+          } else {
+            this.logger.info(`[ ${logTag} ] passMessage`);
+          }
+          resolve(true);
+        })
+        .catch((error) => {
+          this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
+          resolve(false);
+        });
+  }
+
   handleWishCreation(wishdb, content, resolve) {
     const logTag = "WISH"
     this.logger.info(`[ ${logTag} ] handling wish creation`);
@@ -61,13 +99,20 @@ class MongoHandler {
     const options = {upsert: true};
     coursedb.updateOne(searchQuery, updateQuery, options)
       .then((response) => {
+        const body = {
+            uuid: content.uuid,
+            action: content.action
+        };
         if (response.upsertedCount === 0) {
           this.logger.info(`[ ${logTag} ] wish ${content.name} by ${content.wisher} already exists`);
-          resolve(false);
+          body.statusCode = 409;
+          body.message = "Wish by that title for this user already exists. Please try again.";
         } else {
           this.logger.info(`[ ${logTag} ] created wish ${content.name} by ${content.wisher}`);
-          resolve(true);
+          body.statusCode = 201;
+          body.message = "Wish was successfully created.";
         }
+        this.respond(logTag, body, resolve);
       })
       .catch((error) => {
         this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
