@@ -16,6 +16,8 @@ class MongoHandler {
       MongoClient.connect(this.host)
         .then((client) => {
           this.logger.info("[ MONGO ] connected to client");
+          const wishdb = client.db("coursebook").collection("wish");
+              
 
           switch (content.action) {
             case "REGISTRATION":
@@ -27,15 +29,15 @@ class MongoHandler {
               this.handleCourseCreation(coursedb, content, resolve);
               break;
             case "WISH_CREATE":
-              const wishdb = client.db("coursebook").collection("wish");
+
               this.handleWishCreation(wishdb, content, resolve);
               break;
             case "WISH_UPDATE":
-              const wishdb = client.db("coursebook").collection("wish");
+
               this.handleWishUpdate(wishdb, content, resolve);
               break;
             case "WISH_DELETE":
-              const wishdb = client.db("coursebook").collection("wish");
+
               this.handleWishDelete(wishdb, content, resolve);
               break;
             default:
@@ -59,7 +61,7 @@ class MongoHandler {
        }
     };
     const options = {upsert: true};
-    coursedb.updateOne(searchQuery, updateQuery, options)
+    wishdb.updateOne(searchQuery, updateQuery, options)
       .then((response) => {
         const body = {
             uuid: content.uuid,
