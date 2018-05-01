@@ -94,6 +94,38 @@ class MongoServer {
         });
     });
 
+    app.get("/wish/:id", (request, response) => {
+      const logTag = "WISH";
+      const wishId = request.params.id;
+
+      this.logger.info(`[ ${logTag} ] retrieving wish with id ${courseId}`);
+      MongoClient.connect(this.host)
+        .then((client) => {
+          const coursedb = client.db("coursebook").collection("wishes");
+          const objectId = new MongoClient.ObjectId(wishId);
+          const searchQuery = {_id: objectId};
+          coursedb.findOne(searchQuery)
+            .then((mongoResponse) => {
+              this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+              const body = {
+                statusCode: 200,
+                message: mongoResponse
+              };
+              response.status(200)
+                .send(body);
+            })
+            .catch((error) => {
+              this.logger.error(`[ ${logTag} ] ${error.message}`);
+            const body = {
+                statusCode: 500,
+                message: `There was an issue looking up for wish with id ${wishId}`
+            };
+              response.status(200)
+                .send(body);
+            });
+        });
+    });
+
     app.listen(this.port, (error) => {
       if (error) {
         this.logger.error(`[ INIT ] failed to start server: ${error.message}`);
