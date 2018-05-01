@@ -17,7 +17,7 @@ class MongoHandler {
         .then((client) => {
           this.logger.info("[ MONGO ] connected to client");
           const wishdb = client.db("coursebook").collection("wish");
-              
+
 
           switch (content.action) {
             case "REGISTRATION":
@@ -97,20 +97,13 @@ class MongoHandler {
     const options = {upsert: false};
     coursedb.updateOne(searchQuery, updateQuery, options)
       .then((response) => {
-        const body = {
-            uuid: content.uuid,
-            action: content.action
-        };
         if (response.modifiedCount === 0) {
           this.logger.info(`[ ${logTag} ] wish ${content.name} by ${content.wisher} doesn't exist with id ${content.wishId}`);
-          body.statusCode = 409;
-          body.message = "Wish by that ID does not exist. Please try another.";
+          resolve(true);
         } else {
           this.logger.info(`[ ${logTag} ] Updated wish ${content.name} by ${content.wisher} with id ${content.wishId}`);
-          body.statusCode = 201;
-          body.message = "Wish was successfully updated.";
+          resolve(true);
         }
-        this.respond(logTag, body, resolve);
       })
       .catch((error) => {
         this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
@@ -134,20 +127,13 @@ class MongoHandler {
     const options = {upsert: false};
     coursedb.updateOne(searchQuery, updateQuery, options)
       .then((response) => {
-        const body = {
-            uuid: content.uuid,
-            action: content.action
-        };
         if(response.nModified === 0) {
           this.logger.info(`course ${content.name} by ${content.author} already exists`);
-          body.statusCode = 409;
-          body.message = "Course by that title does not exist. Please verify your input.";
+          resolve(true);
         } else {
           this.logger.info(`updated course ${content.name} by ${content.author}`);
-          body.statusCode = 201;
-          body.message = "Course was successfully updated.";
+          resolve(true);
         }
-        this.respond(body, resolve);
       })
       .catch((error) => {
         this.logger.error(`Mongo failed update query: ${JSON.stringify(error.message)}`);
@@ -161,20 +147,12 @@ class MongoHandler {
     const searchQuery = {_id : content.wishId};
     coursedb.deleteOne(searchQuery)
       .then((response) => {
-        const body = {
-            uuid: content.uuid,
-            action: content.action
-        };
         if (response.deletedCount === 0) {
           this.logger.info(`[ ${logTag} ] Wish with id ${content.wishId} does not exist`);
-          body.statusCode = 409;
-          body.message = "Wish by that ID does not exist, please try again.";
         } else {
           this.logger.info(`[ ${logTag} ] Deleted wish with id ${content.wishId}`);
-          body.statusCode = 201;
-          body.message = "Wish was successfully deleted.";
         }
-        this.respond(logTag, body, resolve);
+        resolve(true);
       })
       .catch((error) => {
         this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
