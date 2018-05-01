@@ -116,6 +116,43 @@ class MongoHandler {
       });
   }
 
+  handleCourseUpdate(coursedb, content, resolve) {
+    const searchQuery = {name: content.name, author: content.author};
+    const updateQuery = {
+      $set: {
+        name: content.name,
+        author: content.author,
+        shortDescription: content.shortDescription,
+        description: content.description,
+        sources: content.sources,
+        reviews: [],
+        wish: []
+       }
+    };
+    const options = {upsert: false};
+    coursedb.updateOne(searchQuery, updateQuery, options)
+      .then((response) => {
+        const body = {
+            uuid: content.uuid,
+            action: content.action
+        };
+        if(response.nModified === 0) {
+          this.logger.info(`course ${content.name} by ${content.author} already exists`);
+          body.statusCode = 409;
+          body.message = "Course by that title does not exist. Please verify your input.";
+        } else {
+          this.logger.info(`updated course ${content.name} by ${content.author}`);
+          body.statusCode = 201;
+          body.message = "Course was successfully updated.";
+        }
+        this.respond(body, resolve);
+      })
+      .catch((error) => {
+        this.logger.error(`Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
+  }
+
   handleWishDelete(wishdb, content, resolve) {
     const logTag = "WISH"
     this.logger.info(`[ ${logTag} ] handling wish deletion`);
