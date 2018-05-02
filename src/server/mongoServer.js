@@ -98,13 +98,13 @@ class MongoServer {
       const logTag = "WISH";
       const wishId = request.params.id;
 
-      this.logger.info(`[ ${logTag} ] retrieving wish with id ${courseId}`);
+      this.logger.info(`[ ${logTag} ] retrieving wish with id ${wishId}`);
       MongoClient.connect(this.host)
         .then((client) => {
-          const coursedb = client.db("coursebook").collection("wishes");
+          const wishdb = client.db("coursebook").collection("wish");
           const objectId = new MongoClient.ObjectId(wishId);
           const searchQuery = {_id: objectId};
-          coursedb.findOne(searchQuery)
+          wishdb.findOne(searchQuery)
             .then((mongoResponse) => {
               this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
               const body = {
@@ -119,6 +119,68 @@ class MongoServer {
             const body = {
                 statusCode: 500,
                 message: `There was an issue looking up for wish with id ${wishId}`
+            };
+              response.status(200)
+                .send(body);
+            });
+        });
+    });
+
+
+    app.get("/wish", (request, response) => {
+      const logTag = "WISH_FETCH";
+
+      this.logger.info(`[ ${logTag} ] retrieving all wish`);
+      MongoClient.connect(this.host)
+        .then((client) => {
+          const wishdb = client.db("coursebook").collection("wish");
+          const searchQuery = {};
+          wishdb.find(searchQuery).toArray()
+            .then((mongoResponse) => {
+              this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+              const body = {
+                statusCode: 200,
+                message: mongoResponse
+              };
+              response.status(200)
+                .send(body);
+            })
+            .catch((error) => {
+              this.logger.error(`[ ${logTag} ] ${error.message}`);
+            const body = {
+                statusCode: 500,
+                message: `There was an issue looking up for all wish`
+            };
+              response.status(200)
+                .send(body);
+            });
+        });
+    });
+
+
+    app.get("/course", (request, response) => {
+      const logTag = "COURSE_FETCH";
+
+      this.logger.info(`[ ${logTag} ] retrieving all courses`);
+      MongoClient.connect(this.host)
+        .then((client) => {
+          const coursedb = client.db("coursebook").collection("courses");
+          const searchQuery = {};
+          coursedb.find(searchQuery).toArray()
+            .then((mongoResponse) => {
+              this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+              const body = {
+                statusCode: 200,
+                message: mongoResponse
+              };
+              response.status(200)
+                .send(body);
+            })
+            .catch((error) => {
+              this.logger.error(`[ ${logTag} ] ${error.message}`);
+            const body = {
+                statusCode: 500,
+                message: `There was an issue looking up for all courses`
             };
               response.status(200)
                 .send(body);
