@@ -160,6 +160,27 @@ class MongoHandler {
       });
   }
 
+  handleCourseDelete(wishdb, content, resolve) {
+    const logTag = "WISH"
+    this.logger.info(`[ ${logTag} ] handling wish deletion`);
+    const searchQuery = {_id : content.courseId};
+    coursedb.deleteOne(searchQuery)
+      .then((response) => {
+        if (response.deletedCount === 0) {
+          this.logger.info(`[ ${logTag} ] Course with id ${content.courseId} does not exist`);
+        } else {
+          this.logger.info(`[ ${logTag} ] Deleted course with id ${content.courseId}`);
+        }
+        resolve(true);
+      })
+      .catch((error) => {
+        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
+  }
+
+
+
   handleMongoDown(content, error, resolve) {
     this.logger.error(`[ DOWN ] Could not connect to MongoClient. Message: ${error.message}`);
     const body = {

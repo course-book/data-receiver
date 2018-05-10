@@ -28,6 +28,7 @@
     "dotenv": "^5.0.1",
     "express": "^4.16.3",
     "mongodb": "^3.0.7",
+    "redis": "^2.8.0",
     "request": "^2.85.0",
     "request-promise": "^4.2.2",
     "simple-node-logger": "^0.93.37"
