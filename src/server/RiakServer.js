@@ -52,8 +52,43 @@ class RiakServer {
     });
 
     app.get("/registration/:ip", (request, response) => {
-      const logTag = "REGISTRATION";
-      this.logger.info(`[ ${logTag} ] registration stats for ${request.params.ip}`);
+      fetchCounter("REGISTRATION", "REGISTRATION", request.params.ip, response);
+    });
+
+    app.get("/course/create/:username", (request, response) => {
+      fetchCounter("COURSE", "COURSE_CREATE", request.params.username, response);
+    });
+
+    app.get("/course/fetch/:courseId", (request, response) => {
+      fetchCounter("COURSE", "COURSE_FETCH", request.params.courseId, response);
+    });
+
+    app.get("/course/update/:courseId", (request, response) => {
+      fetchCounter("COURSE", "COURSE_UPDATE", request.params.courseId, response);
+    });
+
+    app.get("/course/delete/:username", (request, response) => {
+      fetchCounter("COURSE", "COURSE_DELETE", request.params.username, response);
+    });
+
+    app.get("/wish/create/:username", (request, response) => {
+      fetchCounter("WISH", "WISH_CREATE", request.params.username, response);
+    });
+
+    app.get("/wish/fetch/:courseId", (request, response) => {
+      fetchCounter("WISH", "WISH_FETCH", request.params.courseId, response);
+    });
+
+    app.get("/wish/update/:courseId", (request, response) => {
+      fetchCounter("WISH", "WISH_UPDATE", request.params.courseId, response);
+    });
+
+    app.get("/wish/delete/:username", (request, response) => {
+      fetchCounter("WISH", "WISH_DELETE", request.params.username, response);
+    });
+
+    const fetchCounter = (logTag, type, key, response) => {
+      this.logger.info(`[ ${logTag} ] ${type} stats for ${key}`);
 
       const client = new Riak.Client(this.nodes, (error, c) => {
         if (error) {
@@ -63,9 +98,9 @@ class RiakServer {
         this.logger.info(`[ ${logTag} ] successfully connected to riak`);
 
         const options = {
-          bucket: "REGISTRATION",
+          bucket: type,
           bucketType: "counters",
-          key: request.params.ip,
+          key: key,
         };
         client.fetchCounter(options, (error, riakResponse, data) => {
           if (error) {
@@ -75,9 +110,9 @@ class RiakServer {
           this.logger.info(`[ ${logTag} ] response ${JSON.stringify(riakResponse)}`);
           response.status(200)
             .send(riakResponse);
-        })
+        });
       });
-    });
+    };
 
     const handleRiakDown = (logTag, error) => {
       this.logger.error(`[ ${logTag} ] ${error.message}`);
