@@ -22,34 +22,76 @@ class RiakServer {
       response.status(200).send("pong");
     });
 
+    app.get("/login/:ip", (request, response) => {
+      const logTag = "LOGIN";
+      this.logger.info(`[ ${logTag} ] login stats for ${request.params.ip}`);
+
+      const client = new Riak.Client(this.nodes, (error, c) => {
+        if (error) {
+          handleRiakDown(logTag, error);
+          return;
+        }
+        this.logger.info(`[ ${logTag} ] successfully connected to riak`);
+
+        const options = {
+          bucketType: "maps",
+          bucket: "LOGIN",
+          key: request.params.ip
+        };
+        c.fetchMap(options, (error, riakResponse, data) => {
+          if (error) {
+            handleError(logTag, error, data, response);
+            return;
+          }
+
+          this.logger.info(`[ ${logTag} ] response ${JSON.stringify(riakResponse)}`);
+          response.status(200)
+            .send(riakResponse);
+        });
+      });
+    });
+
     app.get("/registration/:ip", (request, response) => {
       const logTag = "REGISTRATION";
       this.logger.info(`[ ${logTag} ] registration stats for ${request.params.ip}`);
 
       const client = new Riak.Client(this.nodes, (error, c) => {
         if (error) {
-          this.logger.error(`[ ${logTag} ] ${error.message}`);
-          response.status(500)
-            .send(error.message);
+          handleRiakDown(logTag, error);
           return;
         }
         this.logger.info(`[ ${logTag} ] successfully connected to riak`);
 
-        const options = {bucket: "REGISTRATION", bucketType: "counters", key: request.params.ip};
+        const options = {
+          bucket: "REGISTRATION",
+          bucketType: "counters",
+          key: request.params.ip,
+        };
         client.fetchCounter(options, (error, riakResponse, data) => {
           if (error) {
-            this.logger.error(`[ ${logTag} ] ${error.message} with data ${data}`);
-            response.status(500)
-              .send(`Riak Error: ${error.message} with data ${data}`);
-              return;
+            handleError(logTag, error, data, response);
+            return;
           }
           this.logger.info(`[ ${logTag} ] response ${JSON.stringify(riakResponse)}`);
           response.status(200)
             .send(riakResponse);
-          return;
         })
       });
     });
+
+    const handleRiakDown = (logTag, error) => {
+      this.logger.error(`[ ${logTag} ] ${error.message}`);
+      response.status(500)
+        .send(error.message);
+      return;
+    }
+
+    const handleError = (logTag, error, data, response) => {
+      this.logger.error(`[ ${logTag} ] ${error.message} with data ${data}`);
+      response.status(500)
+        .send(`Riak Error: ${error.message} with data ${data}`);
+        return;
+    }
 
     app.listen(this.port, (error) => {
       if (error) {
