@@ -159,33 +159,68 @@ class MongoServer {
 
 
     app.get("/course", (request, response) => {
-      const logTag = "COURSE_FETCH";
+      const search = decodeURI(request.query.search);
 
-      this.logger.info(`[ ${logTag} ] retrieving all courses`);
-      MongoClient.connect(this.host)
-        .then((client) => {
-          const coursedb = client.db("coursebook").collection("courses");
-          const searchQuery = {};
-          coursedb.find(searchQuery).toArray()
-            .then((mongoResponse) => {
-              this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+      if(search === 'undefined'){
+        const logTag = "COURSE_FETCH";
+        this.logger.info(`[ ${logTag} ] retrieving all courses`);
+        MongoClient.connect(this.host)
+          .then((client) => {
+            const coursedb = client.db("coursebook").collection("courses");
+            const searchQuery = {};
+            coursedb.find(searchQuery).toArray()
+              .then((mongoResponse) => {
+                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+                const body = {
+                  statusCode: 200,
+                  message: mongoResponse
+                };
+                response.status(200)
+                  .send(body);
+              })
+              .catch((error) => {
+                this.logger.error(`[ ${logTag} ] ${error.message}`);
               const body = {
-                statusCode: 200,
-                message: mongoResponse
+                  statusCode: 500,
+                  message: `There was an issue looking up for all courses`
               };
-              response.status(200)
-                .send(body);
-            })
-            .catch((error) => {
-              this.logger.error(`[ ${logTag} ] ${error.message}`);
-            const body = {
-                statusCode: 500,
-                message: `There was an issue looking up for all courses`
+                response.status(200)
+                  .send(body);
+              });
+          });
+      }else{
+        const logTag = "COURSE_SEARCH"
+        this.logger.info(`[ ${logTag} ] searching all courses ${search}`);
+        MongoClient.connect(this.host)
+          .then((client) => {
+            const coursedb = client.db("coursebook").collection("courses");
+            const searchQuery = {
+              name: {
+                $regex: `.*${search}.*`,
+                $options: 'si' 
+              }
             };
-              response.status(200)
-                .send(body);
-            });
-        });
+            coursedb.find(searchQuery).toArray()
+              .then((mongoResponse) => {
+                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+                const body = {
+                  statusCode: 200,
+                  message: mongoResponse
+                };
+                response.status(200)
+                  .send(body);
+              })
+              .catch((error) => {
+                this.logger.error(`[ ${logTag} ] ${error.message}`);
+              const body = {
+                  statusCode: 500,
+                  message: `There was an issue looking up for the course search`
+              };
+                response.status(200)
+                  .send(body);
+              });
+          });
+        }
     });
 
     app.listen(this.port, (error) => {
