@@ -56,7 +56,7 @@ class RedisServer {
         .then((mongoResponse) => {
           logger.info(`[ ${logTag} ] mongo responded with ${mongoResponse}`);
           let message = mongoResponse;
-          client.set(courseId, mongoResponse.message)
+          client.set(courseId, mongoResponse.message, 300)
           response.status(mongoResponse.statusCode)
             .send({message : mongoResponse.message});
         })
@@ -76,7 +76,7 @@ class RedisServer {
         .then((mongoResponse) => {
           logger.info(`[ ${logTag} ] mongo responded with ${mongoResponse}`);
           let message = mongoResponse;
-          client.set(courseId, mongoResponse.message)
+          client.set(courseId, mongoResponse.message, 300)
           response.status(mongoResponse.statusCode)
             .send({message : mongoResponse.message});
         })
