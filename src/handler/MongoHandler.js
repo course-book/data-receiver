@@ -216,7 +216,7 @@ class MongoHandler {
 
   handleCourseDelete(wishdb, content, resolve) {
     const logTag = "WISH"
-    this.logger.info(`[ ${logTag} ] handling wish deletion`);
+    this.logger.info(`[ ${logTag} ] handling course deletion`);
     const searchQuery = {_id : content.courseId};
     coursedb.deleteOne(searchQuery)
       .then((response) => {

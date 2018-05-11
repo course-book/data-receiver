@@ -1,12 +1,12 @@
 const express = require("express");
-const redis = require("redis")
+const redis = require("redis");
 const bodyParser = require("body-parser");
 
 class RedisServer {
   constructor(host, port, logger) {
     this.client = redis.createClient(port, host);
     this.logger = logger;
-
+    this.DEFAULT_EX = 300;
     this.listen = this.listen.bind(this);
   }
 
@@ -19,7 +19,7 @@ class RedisServer {
 
     app.get("/course/fetch/:courseId", (request, response) => {
       const logTag = "COURSE";
-      const courseId = request.params.id;
+      const courseId = request.params.courseId;
 
       this.logger.info(`[ ${logTag} ] retrieving course with id ${courseId}`);
       this.client.get(courseId, (err, res) => {
@@ -34,7 +34,7 @@ class RedisServer {
 
     app.get("/wish/fetch/:wishId", (request, response) => {
       const logTag = "WISH";
-      const wishId = request.params.id;
+      const wishId = request.params.wishId;
 
       this.logger.info(`[ ${logTag} ] retrieving wish with id ${wishId}`);
       this.client.get(wishId, (err, res) => {
@@ -56,7 +56,7 @@ class RedisServer {
         .then((mongoResponse) => {
           logger.info(`[ ${logTag} ] mongo responded with ${mongoResponse}`);
           let message = mongoResponse;
-          client.set(courseId, mongoResponse.message, 300)
+          client.set(courseId, mongoResponse.message, this.DEFAULT_EX)
           response.status(mongoResponse.statusCode)
             .send({message : mongoResponse.message});
         })
@@ -76,7 +76,7 @@ class RedisServer {
         .then((mongoResponse) => {
           logger.info(`[ ${logTag} ] mongo responded with ${mongoResponse}`);
           let message = mongoResponse;
-          client.set(courseId, mongoResponse.message, 300)
+          client.set(courseId, mongoResponse.message, this.DEFAULT_EX)
           response.status(mongoResponse.statusCode)
             .send({message : mongoResponse.message});
         })
