@@ -38,10 +38,12 @@ class RedisServer {
     const fetchData = (logTag, type, id, uri, response) => {
       this.logger.info(`[ ${logTag} ] retrieving ${type} with id ${id}`);
       this.client.get(id, (err, res) => {
-        this.logger.info(`[ ${logTag} ] response ${res}`);
+        this.logger.info(`[ ${logTag} ] redis response ${res}`);
         if (err || res === null) {
+          this.logger.info(`[ ${logTag} ] cache miss`);
           fetchDataFromMongo(logTag, id, uri, response);
         } else {
+          this.logger.info(`[ ${logTag} ] cache hit`);
           response.status(200)
             .send({statusCode: 200, data: res});
         }
@@ -60,7 +62,7 @@ class RedisServer {
           const message = JSON.stringify(mongoResponse.message);
           this.client.set(id, message, "EX", this.DEFAULT_EX);
           response.status(mongoResponse.statusCode)
-            .send(mongoResponse);
+            .send({statusCode: mongoResponse.statusCode, data: message});
         })
         .catch((error) => {
           this.logger.error(`[ ${logTag} ] ${error.message}`);
