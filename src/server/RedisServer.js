@@ -1,10 +1,16 @@
 const express = require("express");
 const redis = require("redis");
 const bodyParser = require("body-parser");
+const dotenv = require("dotenv");
+const rp = require("request-promise");
+dotenv.config();
+
+const MONGO_SERVER = process.env.MONGO_SERVER;
 
 class RedisServer {
   constructor(host, port, logger) {
-    this.client = redis.createClient(port, host);
+    this.client = redis.createClient(host);
+    this.port = port;
     this.logger = logger;
     this.DEFAULT_EX = 300;
     this.listen = this.listen.bind(this);
@@ -17,31 +23,33 @@ class RedisServer {
 
     // TODO: specify endpoints
 
-    app.get("/course/fetch/:courseId", (request, response) => {
+    app.get("/course/:courseId", (request, response) => {
       const logTag = "COURSE";
       const courseId = request.params.courseId;
 
       this.logger.info(`[ ${logTag} ] retrieving course with id ${courseId}`);
       this.client.get(courseId, (err, res) => {
-        if(err || res === null){
+        this.logger.info(`[ ${logTag} ] response ${res}`);
+        if (err || res === null){
           handleMongoCourse(logTag, courseId, response)
         } else {
-          response.status(200).send(JSON.parse(res));
+          response.status(200).send({statusCode: 200, data: res});
         }
         });
       });
 
 
-    app.get("/wish/fetch/:wishId", (request, response) => {
+    app.get("/wish/:wishId", (request, response) => {
       const logTag = "WISH";
       const wishId = request.params.wishId;
 
       this.logger.info(`[ ${logTag} ] retrieving wish with id ${wishId}`);
       this.client.get(wishId, (err, res) => {
+        this.logger.info(`[ ${logTag} ] response ${res}`);
         if(err || res === null){
           handleMongoWish(logTag, wishId, response)
         } else {
-          response.status(200).send(JSON.parse(res));
+          response.status(200).send({statusCode: 200, data: res});
         }
         });
       });
@@ -49,19 +57,19 @@ class RedisServer {
     const handleMongoCourse = (logTag, courseId, response) => {
       const options = {
         method: "GET",
-        uri: encodeURI(`${MONGO_HOST}/course/${courseId}`),
-        json = true
+        uri: encodeURI(`${MONGO_SERVER}/course/${courseId}`),
+        json: true
       }
       rp(options)
         .then((mongoResponse) => {
-          logger.info(`[ ${logTag} ] mongo responded with ${mongoResponse}`);
-          let message = mongoResponse;
-          client.set(courseId, mongoResponse.message, this.DEFAULT_EX)
+          this.logger.info(`[ ${logTag} ] mongo responded with ${JSON.stringify(mongoResponse)}`);
+          let message = JSON.stringify(mongoResponse.message);
+          this.client.set(courseId, message, "EX", this.DEFAULT_EX)
           response.status(mongoResponse.statusCode)
-            .send({message : mongoResponse.message});
+            .send(mongoResponse);
         })
         .catch((error) => {
-          logger.error(`[ ${logTag} ] ${error.message}`);
+          this.logger.error(`[ ${logTag} ] ${error.message}`);
           response.status(500).send({message : error.message});
         })
     }
@@ -69,19 +77,19 @@ class RedisServer {
     const handleMongoWish = (logTag, wishId, response) => {
       const options = {
         method: "GET",
-        uri: encodeURI(`${MONGO_HOST}/wish/${wishId}`),
-        json = true
+        uri: encodeURI(`${MONGO_SERVER}/wish/${wishId}`),
+        json: true
       }
       rp(options)
         .then((mongoResponse) => {
-          logger.info(`[ ${logTag} ] mongo responded with ${mongoResponse}`);
-          let message = mongoResponse;
-          client.set(courseId, mongoResponse.message, this.DEFAULT_EX)
+          this.logger.info(`[ ${logTag} ] mongo responded with ${mongoResponse}`);
+          let message = JSON.stringify(mongoResponse.message);
+          this.client.set(courseId, message, "EX", this.DEFAULT_EX)
           response.status(mongoResponse.statusCode)
-            .send({message : mongoResponse.message});
+            .send(mongoResponse);
         })
         .catch((error) => {
-          logger.error(`[ ${logTag} ] ${error.message}`);
+          this.logger.error(`[ ${logTag} ] ${error.message}`);
           response.status(500).send({message : error.message});
         })
     }

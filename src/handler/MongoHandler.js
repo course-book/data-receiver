@@ -170,6 +170,43 @@ class MongoHandler {
       });
   }
 
+  
+  handleWishCreation(wishdb, content, resolve) {
+    const logTag = "WISH"
+    this.logger.info(`[ ${logTag} ] handling wish creation`);
+    const searchQuery = {name: content.name, wisher: content.wisher, complete: false};
+    const updateQuery = {
+      $setOnInsert: {
+        name: content.name,
+        details: content.details,
+        wisher: content.wisher
+       }
+    };
+    const options = {upsert: true};
+
+    wishdb.updateOne(searchQuery, updateQuery, options)
+      .then((response) => {
+        const body = {
+            uuid: content.uuid,
+            action: content.action
+        };
+        if (response.upsertedCount === 0) {
+          this.logger.info(`[ ${logTag} ] wish ${content.name} by ${content.wisher} already exists`);
+          body.statusCode = 409;
+          body.message = "Wish by that name and author already exists. Please try another.";
+        } else {
+          this.logger.info(`[ ${logTag} ] created wish ${content.name} by ${content.wisher}`);
+          body.statusCode = 201;
+          body.message = "Wish was successfully created.";
+        }
+        this.respond(logTag, body, resolve);
+      })
+      .catch((error) => {
+        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
+  }
+
   handleCourseDelete(coursedb, wishdb, content, resolve) {
     const logTag = "COURSE_DELETE"
     this.logger.info(`[ ${logTag} ] handling course deletion`);
@@ -214,24 +251,6 @@ class MongoHandler {
     });
   }
 
-  handleCourseDelete(wishdb, content, resolve) {
-    const logTag = "WISH"
-    this.logger.info(`[ ${logTag} ] handling course deletion`);
-    const searchQuery = {_id : content.courseId};
-    coursedb.deleteOne(searchQuery)
-      .then((response) => {
-        if (response.deletedCount === 0) {
-          this.logger.info(`[ ${logTag} ] Course with id ${content.courseId} does not exist`);
-        } else {
-          this.logger.info(`[ ${logTag} ] Deleted course with id ${content.courseId}`);
-        }
-        resolve(true);
-      })
-      .catch((error) => {
-        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
-        resolve(false);
-      });
-  }
 
 
 

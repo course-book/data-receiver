@@ -12,6 +12,7 @@ dotenv.config();
 
 const MONGO_HOST = process.env.MONGO_HOST;
 const RABBIT_HOST = process.env.RABBITMQ_HOST;
+const REDIS_HOST = process.env.REDIS_HOST;
 const RIAK_NODES = process.env.RIAK_NODES.split(",");
 const RESPONSE_ENDPOINT = process.env.RESPONSE_ENDPOINT;
 
@@ -29,7 +30,7 @@ switch (routingKey) {
     break;
   case "redis":
     handler = new RedisHandler(REDIS_HOST, logger);
-    server = new RedisServer(REDDIS_HOST, 8091, logger);
+    server = new RedisServer(REDIS_HOST, 8091, logger);
     break;
   case "riak":
     handler = new RiakHandler(RIAK_NODES, logger);
