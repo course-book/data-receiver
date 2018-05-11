@@ -214,10 +214,42 @@ class MongoHandler {
     });
   }
 
-  handleWishCreation(wishdb, content, resolve) {
+  handleCourseDelete(wishdb, content, resolve) {
     const logTag = "WISH"
-    this.logger.info(`[ ${logTag} ] handling wish creation`);
-    const searchQuery = {name: content.name, wisher: content.wisher, complete: false};
+    this.logger.info(`[ ${logTag} ] handling course deletion`);
+    const searchQuery = {_id : content.courseId};
+    coursedb.deleteOne(searchQuery)
+      .then((response) => {
+        if (response.deletedCount === 0) {
+          this.logger.info(`[ ${logTag} ] Course with id ${content.courseId} does not exist`);
+        } else {
+          this.logger.info(`[ ${logTag} ] Deleted course with id ${content.courseId}`);
+        }
+        resolve(true);
+      })
+      .catch((error) => {
+        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
+  }
+
+
+
+  handleMongoDown(content, error, resolve) {
+    this.logger.error(`[ DOWN ] Could not connect to MongoClient. Message: ${error.message}`);
+    const body = {
+      json: {
+        uuid: content.uuid,
+        statuscode: 102,
+        message: "Registration is down. The registration request will be processed once it is back up."
+      }
+    };
+    this.respond(logTag, body, resolve);
+  }
+
+  handleRegistration(userdb, content, resolve) {
+    const logTag = "REGISTRATION";
+    const searchQuery = {username: content.username};
     const updateQuery = {
       $setOnInsert: {
         name: content.name,
