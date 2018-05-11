@@ -55,7 +55,8 @@ class RiakHandler {
               .then((result) => resolve(result));
           case "WISH_UPDATE":
           case "WISH_FETCH":
-            return this.handleFetchOrUpdate("WISH", content, c);
+            return this.handleFetchOrUpdate("WISH", content, c)
+              .then((result) => resolve(result));
           default:
             this.logger.warn(`[ RIAK ] Unexpected type ${content.action}.`);
             return resolve(true);

@@ -36,7 +36,7 @@ switch (routingKey) {
     server = new RiakServer(RIAK_NODES, 8092, logger);
     break;
   default:
-    throw new Error(`Unsupported routingKey ${routingKey}.`);
+    throw new Error(`unsupported routingKey ${routingKey}.`);
     break;
 }
 
