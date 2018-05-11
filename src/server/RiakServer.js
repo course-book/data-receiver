@@ -75,12 +75,12 @@ class RiakServer {
       fetchCounter("WISH", "WISH_CREATE", request.params.username, response);
     });
 
-    app.get("/wish/fetch/:courseId", (request, response) => {
-      fetchCounter("WISH", "WISH_FETCH", request.params.courseId, response);
+    app.get("/wish/fetch/:wishId", (request, response) => {
+      fetchCounter("WISH", "WISH_FETCH", request.params.wishId, response);
     });
 
-    app.get("/wish/update/:courseId", (request, response) => {
-      fetchCounter("WISH", "WISH_UPDATE", request.params.courseId, response);
+    app.get("/wish/update/:wishId", (request, response) => {
+      fetchCounter("WISH", "WISH_UPDATE", request.params.wishId, response);
     });
 
     app.get("/wish/delete/:username", (request, response) => {
