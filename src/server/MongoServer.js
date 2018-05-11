@@ -16,7 +16,6 @@ class MongoServer {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({extended: false}));
 
-    // TODO: specify endpoints
     app.post("/login", (request, response) => {
       const logTag = "LOGIN";
       const body = request.body;
@@ -126,7 +125,6 @@ class MongoServer {
         });
     });
 
-
     app.get("/wish", (request, response) => {
       const logTag = "WISH_FETCH";
 
@@ -157,11 +155,10 @@ class MongoServer {
         });
     });
 
-
     app.get("/course", (request, response) => {
       const search = decodeURI(request.query.search);
 
-      if(search === 'undefined'){
+      if (search === 'undefined') {
         const logTag = "COURSE_FETCH";
         this.logger.info(`[ ${logTag} ] retrieving all courses`);
         MongoClient.connect(this.host)
@@ -188,7 +185,7 @@ class MongoServer {
                   .send(body);
               });
           });
-      }else{
+      } else {
         const logTag = "COURSE_SEARCH"
         this.logger.info(`[ ${logTag} ] searching all courses ${search}`);
         MongoClient.connect(this.host)
@@ -197,7 +194,7 @@ class MongoServer {
             const searchQuery = {
               name: {
                 $regex: `.*${search}.*`,
-                $options: 'si' 
+                $options: 'si'
               }
             };
             coursedb.find(searchQuery).toArray()
