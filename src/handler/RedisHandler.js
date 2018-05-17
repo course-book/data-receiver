@@ -40,15 +40,13 @@ class RedisHandler {
           return;
         }
         this.logger.error(`[ ${logTag} ] client passed invalid command ${err.command} with code ${err.code}`);
+      } else if (res === 1) {
+        this.logger.info(`[ ${logTag} ] ${content.action} invalidated with id ${key}`);
       } else {
-        if (res === 1) {
-            this.logger.info(`[ ${logTag} ] ${content.action} invalidated with id ${key}`);
-        } else {
-            this.logger.info(`[ ${logTag} ] ${content.action} with id ${key} not found`);
-        }
+        this.logger.info(`[ ${logTag} ] ${content.action} with id ${key} not found`);
       }
+      resolve(true);
     });
-    resolve(true);
   }
 }
 

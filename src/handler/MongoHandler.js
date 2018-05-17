@@ -170,43 +170,6 @@ class MongoHandler {
       });
   }
 
-  
-  handleWishCreation(wishdb, content, resolve) {
-    const logTag = "WISH"
-    this.logger.info(`[ ${logTag} ] handling wish creation`);
-    const searchQuery = {name: content.name, wisher: content.wisher, complete: false};
-    const updateQuery = {
-      $setOnInsert: {
-        name: content.name,
-        details: content.details,
-        wisher: content.wisher
-       }
-    };
-    const options = {upsert: true};
-
-    wishdb.updateOne(searchQuery, updateQuery, options)
-      .then((response) => {
-        const body = {
-            uuid: content.uuid,
-            action: content.action
-        };
-        if (response.upsertedCount === 0) {
-          this.logger.info(`[ ${logTag} ] wish ${content.name} by ${content.wisher} already exists`);
-          body.statusCode = 409;
-          body.message = "Wish by that name and author already exists. Please try another.";
-        } else {
-          this.logger.info(`[ ${logTag} ] created wish ${content.name} by ${content.wisher}`);
-          body.statusCode = 201;
-          body.message = "Wish was successfully created.";
-        }
-        this.respond(logTag, body, resolve);
-      })
-      .catch((error) => {
-        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
-        resolve(false);
-      });
-  }
-
   handleCourseDelete(coursedb, wishdb, content, resolve) {
     const logTag = "COURSE_DELETE"
     this.logger.info(`[ ${logTag} ] handling course deletion`);
@@ -251,24 +214,10 @@ class MongoHandler {
     });
   }
 
-
-
-
-  handleMongoDown(content, error, resolve) {
-    this.logger.error(`[ DOWN ] Could not connect to MongoClient. Message: ${error.message}`);
-    const body = {
-      json: {
-        uuid: content.uuid,
-        statuscode: 102,
-        message: "Registration is down. The registration request will be processed once it is back up."
-      }
-    };
-    this.respond(logTag, body, resolve);
-  }
-
-  handleRegistration(userdb, content, resolve) {
-    const logTag = "REGISTRATION";
-    const searchQuery = {username: content.username};
+  handleWishCreation(wishdb, content, resolve) {
+    const logTag = "WISH"
+    this.logger.info(`[ ${logTag} ] handling wish creation`);
+    const searchQuery = {name: content.name, wisher: content.wisher, complete: false};
     const updateQuery = {
       $setOnInsert: {
         name: content.name,
