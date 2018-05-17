@@ -301,7 +301,7 @@ class MongoHandler {
     this.logger.error(`[ ${logTag} ] Could not connect to MongoClient. Message: ${error.message}`);
     const body = {
       uuid: content.uuid,
-      statusCode: 102,
+      statusCode: 503,
       message: "Mongo is down. Your request will be processed once it is back up.",
       action: content.action
     };
