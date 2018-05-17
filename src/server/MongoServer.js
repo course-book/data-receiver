@@ -58,7 +58,8 @@ class MongoServer {
               response.status(200)
                 .send(body);
             });
-        });
+        })
+        .catch((error) => handleMongoDown(error, response));
     });
 
     app.get("/course/:id", (request, response) => {
@@ -74,7 +75,8 @@ class MongoServer {
           coursedb.findOne(searchQuery)
             .then((mongoResponse) => handleResponse(mongoResponse, response))
             .catch((error) => handleError(error, `There was an issue looking up for course with id ${courseId}`, response));
-        });
+        })
+        .catch((error) => handleMongoDown(error, response));
     });
 
     app.get("/wish/:id", (request, response) => {
@@ -90,7 +92,8 @@ class MongoServer {
           wishdb.findOne(searchQuery)
             .then((mongoResponse) => handleResponse(mongoResponse, response))
             .catch((error) => handleError(error, `There was an issue looking up for wish with id ${wishId}`, response));
-        });
+        })
+        .catch((error) => handleMongoDown(error, response));
     });
 
     app.get("/wish", (request, response) => {
@@ -104,7 +107,8 @@ class MongoServer {
           wishdb.find(searchQuery).toArray()
             .then((mongoResponse) => handleResponse(mongoResponse, response))
             .catch((error) => handleError(error, `There was an issue looking up for all wish`, response));
-        });
+        })
+        .catch((error) => handleMongoDown(error, response));
     });
 
     app.get("/course", (request, response) => {
@@ -120,7 +124,8 @@ class MongoServer {
             coursedb.find(searchQuery).toArray()
               .then((mongoResponse) => handleResponse(mongoResponse, response))
               .catch((error) => handleError(error, "There was an issue fetching all courses", response));
-          });
+          })
+          .catch((error) => handleMongoDown(error, response));
       } else {
         const logTag = "COURSE_SEARCH"
         this.logger.info(`[ ${logTag} ] searching all courses ${search}`);
@@ -136,7 +141,8 @@ class MongoServer {
             coursedb.find(searchQuery).toArray()
               .then((mongoResponse) => handleResponse(mongoResponse, response))
               .catch((error) => handleError(error, `There was an issue searching for course ${search}`, response));
-          });
+          })
+          .catch((error) => handleMongoDown(error, response));
         }
     });
 
@@ -153,7 +159,8 @@ class MongoServer {
             coursedb.find(searchQuery).toArray()
               .then((mongoResponse) => handleResponse(mongoResponse, response))
               .catch((error) =>  handleError(error, "There was an issue fetching all users", response));
-          });
+          })
+          .catch((error) => handleMongoDown(error, response));
       } else {
         const logTag = "USER_SEARCH"
         this.logger.info(`[ ${logTag} ] searching all users ${search}`);
@@ -169,7 +176,8 @@ class MongoServer {
             coursedb.find(searchQuery).toArray()
               .then((mongoResponse) => handleResponse(mongoResponse, response))
               .catch((error) => handleError(error, "There was an issue searching for users", response));
-          });
+          })
+          .catch((error) => handleMongoDown(error, response));
         }
     });
 
@@ -191,6 +199,10 @@ class MongoServer {
       };
       response.status(200)
         .send(body);
+    };
+
+    const handleMongoDown = (error, response) => {
+      handleError(error, "Mongo is down", response);
     };
 
     app.listen(this.port, (error) => {
