@@ -126,15 +126,86 @@ class MongoServer {
         });
     });
 
-
     app.get("/wish", (request, response) => {
-      const logTag = "WISH_FETCH";
+      const search = decodeURI(request.query.search);
 
-      this.logger.info(`[ ${logTag} ] retrieving all wish`);
+      if(search == 'undefined'){
+        const logTag = "WISH_FETCH";
+
+        this.logger.info(`[ ${logTag} ] retrieving all wish`);
+        MongoClient.connect(this.host)
+          .then((client) => {
+            const wishdb = client.db("coursebook").collection("wish");
+            const searchQuery = {};
+            wishdb.find(searchQuery).toArray()
+              .then((mongoResponse) => {
+                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+                const body = {
+                  statusCode: 200,
+                  message: mongoResponse
+                };
+                response.status(200)
+                  .send(body);
+              })
+              .catch((error) => {
+                this.logger.error(`[ ${logTag} ] ${error.message}`);
+              const body = {
+                  statusCode: 500,
+                  message: `There was an issue looking up for all wish`
+              };
+                response.status(200)
+                  .send(body);
+              });
+          });
+      }else{
+        const logTag = "WISH_SEARCH";
+
+        this.logger.info(`[ ${logTag} ] searching all wishes ${search}`);
+        MongoClient.connect(this.host)
+          .then((client) => {
+            const wishdb = client.db("coursebook").collection("wish");
+            const searchQuery = {
+              name: {
+                    $regex: `.*${search}.*`,
+                    $options: 'si'
+              }
+            };
+            wishdb.find(searchQuery).toArray()
+              .then((mongoResponse) => {
+                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+                const body = {
+                  statusCode: 200,
+                  message: mongoResponse
+                };
+                response.status(200)
+                  .send(body);
+              })
+              .catch((error) => {
+                this.logger.error(`[ ${logTag} ] ${error.message}`);
+              const body = {
+                  statusCode: 500,
+                  message: `There was an issue looking up for the wish search`
+              };
+                response.status(200)
+                  .send(body);
+              });
+          });
+      }
+    });
+
+    app.get("/wish/user/:username", (request, response) => {
+      const logTag = "WISH_MATCH";
+      const username = request.params.username;
+
+      this.logger.info(`[ ${logTag} ] matching all completed but not notified wishes for ${username}`);
       MongoClient.connect(this.host)
         .then((client) => {
           const wishdb = client.db("coursebook").collection("wish");
-          const searchQuery = {};
+          const searchQuery = {
+            wisher: username,
+            complete: true,
+            notify: false
+          };
           wishdb.find(searchQuery).toArray()
             .then((mongoResponse) => {
               this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
@@ -149,14 +220,13 @@ class MongoServer {
               this.logger.error(`[ ${logTag} ] ${error.message}`);
             const body = {
                 statusCode: 500,
-                message: `There was an issue looking up for all wish`
+                message: `There was an issue looking up for the completed but not notified wishes for user ${username} `
             };
               response.status(200)
                 .send(body);
             });
         });
     });
-
 
     app.get("/course", (request, response) => {
       const search = decodeURI(request.query.search);
@@ -194,11 +264,18 @@ class MongoServer {
         MongoClient.connect(this.host)
           .then((client) => {
             const coursedb = client.db("coursebook").collection("courses");
-            const searchQuery = {
-              name: {
-                $regex: `.*${search}.*`,
-                $options: 'si'
-              }
+            const searchQuery = {$or:
+              [ {name: {
+                    $regex: `.*${search}.*`,
+                    $options: 'si'
+                  }
+                },
+                {author:{
+                      $regex: `.*${search}.*`,
+                      $options: 'si'
+                  }
+                }
+              ]
             };
             coursedb.find(searchQuery).toArray()
               .then((mongoResponse) => {

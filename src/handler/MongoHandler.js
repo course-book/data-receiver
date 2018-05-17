@@ -42,6 +42,9 @@ class MongoHandler {
             case "WISH_DELETE":
               this.handleWishDelete(wishdb, content, resolve);
               break;
+            case "WISH_NOTIFY":
+              this.handleWishMarkNotified(wishdb,content,resolve);
+              break;
             default:
               this.logger.warn(`Unsupported action ${content.action}`);
               resolve(true);
@@ -100,7 +103,6 @@ class MongoHandler {
         shortDescription: content.shortDescription,
         description: content.description,
         sources: content.sources,
-        reviews: [],
         wish: content.wish
        }
     };
@@ -170,16 +172,17 @@ class MongoHandler {
       });
   }
 
-  
   handleWishCreation(wishdb, content, resolve) {
-    const logTag = "WISH"
+    const logTag = "WISH_CREATION"
     this.logger.info(`[ ${logTag} ] handling wish creation`);
     const searchQuery = {name: content.name, wisher: content.wisher, complete: false};
     const updateQuery = {
       $setOnInsert: {
         name: content.name,
         details: content.details,
-        wisher: content.wisher
+        wisher: content.wisher,
+        complete: false,
+        notify: false
        }
     };
     const options = {upsert: true};
@@ -251,56 +254,6 @@ class MongoHandler {
     });
   }
 
-
-
-
-  handleMongoDown(content, error, resolve) {
-    this.logger.error(`[ DOWN ] Could not connect to MongoClient. Message: ${error.message}`);
-    const body = {
-      json: {
-        uuid: content.uuid,
-        statuscode: 102,
-        message: "Registration is down. The registration request will be processed once it is back up."
-      }
-    };
-    this.respond(logTag, body, resolve);
-  }
-
-  handleRegistration(userdb, content, resolve) {
-    const logTag = "REGISTRATION";
-    const searchQuery = {username: content.username};
-    const updateQuery = {
-      $setOnInsert: {
-        name: content.name,
-        details: content.details,
-        wisher: content.wisher
-       }
-    };
-    const options = {upsert: true};
-
-    wishdb.updateOne(searchQuery, updateQuery, options)
-      .then((response) => {
-        const body = {
-            uuid: content.uuid,
-            action: content.action
-        };
-        if (response.upsertedCount === 0) {
-          this.logger.info(`[ ${logTag} ] wish ${content.name} by ${content.wisher} already exists`);
-          body.statusCode = 409;
-          body.message = "Wish by that name and author already exists. Please try another.";
-        } else {
-          this.logger.info(`[ ${logTag} ] created wish ${content.name} by ${content.wisher}`);
-          body.statusCode = 201;
-          body.message = "Wish was successfully created.";
-        }
-        this.respond(logTag, body, resolve);
-      })
-      .catch((error) => {
-        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
-        resolve(false);
-      });
-  }
-
   handleWishUpdate(wishdb, content, resolve) {
     const logTag = "WISH_UPDATE"
     this.logger.info(`[ ${logTag} ] handling wish update`);
@@ -319,6 +272,32 @@ class MongoHandler {
           resolve(true);
         } else {
           this.logger.info(`[ ${logTag} ] Updated wish ${content.name} by ${content.wisher} with id ${content.wishId}`);
+          resolve(true);
+        }
+      })
+      .catch((error) => {
+        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
+  }
+
+  handleWishMarkNotified(wishdb, content, resolve) {
+    const logTag = "WISH_NOTIFY"
+    this.logger.info(`[ ${logTag} ] handling wish marking notification`);
+    const searchQuery = {_id: new MongoClient.ObjectId(content.wishId)};
+    const updateQuery = {
+      $set: {
+        notify: true
+       }
+    };
+    const options = {upsert: false};
+    wishdb.updateOne(searchQuery,updateQuery, options)
+      .then((response) => {
+        if (response.modifiedCount === 0) {
+          this.logger.info(`[ ${logTag} ] wish ${content.name} by ${content.wishId} doesn't exist with id ${content.wishId}`);
+          resolve(true);
+        } else {
+          this.logger.info(`[ ${logTag} ] Marked wish ${content.name} by ${content.wisher} with id ${content.wishId} as notified`);
           resolve(true);
         }
       })
