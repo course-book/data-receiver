@@ -305,7 +305,7 @@ class MongoHandler {
       message: "Mongo is down. Your request will be processed once it is back up.",
       action: content.action
     };
-    this.respond(logTag, body, resolve);
+    this.respond(logTag, body, (status) => resolve(false));
   }
 
   respond(logTag, body, resolve) {
