@@ -302,7 +302,7 @@ class MongoHandler {
     const body = {
       json: {
         uuid: content.uuid,
-        statuscode: 102,
+        statusCode: 102,
         message: "Mongo is down. Your request will be processed once it is back up.",
         action: content.action
       }
