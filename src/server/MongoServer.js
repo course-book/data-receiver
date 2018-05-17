@@ -197,7 +197,7 @@ class MongoServer {
             const searchQuery = {
               name: {
                 $regex: `.*${search}.*`,
-                $options: 'si' 
+                $options: 'si'
               }
             };
             coursedb.find(searchQuery).toArray()
@@ -215,6 +215,71 @@ class MongoServer {
               const body = {
                   statusCode: 500,
                   message: `There was an issue looking up for the course search`
+              };
+                response.status(200)
+                  .send(body);
+              });
+          });
+        }
+    });
+
+    app.get("/users", (request, response) => {
+      const search = decodeURI(request.query.search);
+
+      if(search === 'undefined'){
+        const logTag = "USER_FETCH";
+        this.logger.info(`[ ${logTag} ] retrieving all users`);
+        MongoClient.connect(this.host)
+          .then((client) => {
+            const coursedb = client.db("coursebook").collection("users");
+            const searchQuery = {};
+            coursedb.find(searchQuery).toArray()
+              .then((mongoResponse) => {
+                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+                const body = {
+                  statusCode: 200,
+                  message: mongoResponse
+                };
+                response.status(200)
+                  .send(body);
+              })
+              .catch((error) => {
+                this.logger.error(`[ ${logTag} ] ${error.message}`);
+              const body = {
+                  statusCode: 500,
+                  message: `There was an issue looking up for all users`
+              };
+                response.status(200)
+                  .send(body);
+              });
+          });
+      }else{
+        const logTag = "USER_SEARCH"
+        this.logger.info(`[ ${logTag} ] searching all users ${search}`);
+        MongoClient.connect(this.host)
+          .then((client) => {
+            const coursedb = client.db("coursebook").collection("users");
+            const searchQuery = {
+              name: {
+                $regex: `.*${search}.*`,
+                $options: 'si'
+              }
+            };
+            coursedb.find(searchQuery).toArray()
+              .then((mongoResponse) => {
+                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+                const body = {
+                  statusCode: 200,
+                  message: mongoResponse
+                };
+                response.status(200)
+                  .send(body);
+              })
+              .catch((error) => {
+                this.logger.error(`[ ${logTag} ] ${error.message}`);
+              const body = {
+                  statusCode: 500,
+                  message: `There was an issue looking up for the users search`
               };
                 response.status(200)
                   .send(body);
