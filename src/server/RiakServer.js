@@ -28,7 +28,7 @@ class RiakServer {
 
       const client = new Riak.Client(this.nodes, (error, c) => {
         if (error) {
-          handleRiakDown(logTag, error);
+          handleRiakDown(logTag, response, error);
           return;
         }
         this.logger.info(`[ ${logTag} ] successfully connected to riak`);
@@ -114,7 +114,7 @@ class RiakServer {
       });
     };
 
-    const handleRiakDown = (logTag, error) => {
+    const handleRiakDown = (logTag, response, error) => {
       this.logger.error(`[ ${logTag} ] ${error.message}`);
       response.status(500)
         .send(error.message);
