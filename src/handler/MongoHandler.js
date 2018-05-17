@@ -303,7 +303,8 @@ class MongoHandler {
       json: {
         uuid: content.uuid,
         statuscode: 102,
-        message: "Mongo is down. Your request will be processed once it is back up."
+        message: "Mongo is down. Your request will be processed once it is back up.",
+        action: content.action
       }
     };
     this.respond(logTag, body, resolve);
