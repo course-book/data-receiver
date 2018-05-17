@@ -115,16 +115,16 @@ class RiakServer {
     };
 
     const handleRiakDown = (logTag, response, error) => {
-      this.logger.error(`[ ${logTag} ] ${error.message}`);
+      this.logger.error(`[ ${logTag} ] ${error}`);
       response.status(500)
-        .send(error.message);
+        .send(error);
       return;
     }
 
     const handleError = (logTag, error, data, response) => {
-      this.logger.error(`[ ${logTag} ] ${error.message} with data ${data}`);
+      this.logger.error(`[ ${logTag} ] ${error} with data ${data}`);
       response.status(500)
-        .send(`Riak Error: ${error.message} with data ${data}`);
+        .send(`Riak Error: ${error} with data ${data}`);
         return;
     }
 
