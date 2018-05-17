@@ -7,7 +7,13 @@ class RedisHandler {
   constructor(host, logger) {
     this.host = host;
     this.logger = logger;
-    this.client = redis.createClient(host);
+    this.client = redis.createClient(host, {
+      retry_strategy: (options) => {
+        this.logger.info("[ REDIS ] redis is down");
+        return Math.min(options.attempt * 100, 3000);
+      }
+    });
+
     this.logger.info("[ REDIS ] connected to client");
 
     this.receiveMessage = this.receiveMessage.bind(this);

@@ -9,7 +9,15 @@ const MONGO_SERVER = process.env.MONGO_SERVER;
 
 class RedisServer {
   constructor(host, port, logger) {
-    this.client = redis.createClient(host);
+    
+    this.client = redis.createClient(host, {
+      retry_strategy: (options) => {
+        this.logger.info("[ REDIS ] redis is down");
+        return Math.min(options.attempt * 100, 3000);
+      }
+    });
+
+    this.client.on
     this.port = port;
     this.logger = logger;
     this.DEFAULT_EX = 300;
