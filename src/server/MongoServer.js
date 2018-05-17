@@ -182,10 +182,10 @@ class MongoServer {
     });
 
     const handleResponse = (logTag, message, response) => {
-      this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
+      this.logger.info(`[ ${logTag} ] ${JSON.stringify(message)}`);
       const body = {
         statusCode: 200,
-        message: mongoResponse
+        message: message
       };
       response.status(200)
         .send(body);
