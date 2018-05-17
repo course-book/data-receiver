@@ -114,7 +114,7 @@ class MongoServer {
     app.get("/course", (request, response) => {
       const search = decodeURI(request.query.search);
 
-      if (!search) {
+      if (search === "undefined") {
         const logTag = "COURSE_FETCH";
         this.logger.info(`[ ${logTag} ] retrieving all courses`);
         MongoClient.connect(this.host)
