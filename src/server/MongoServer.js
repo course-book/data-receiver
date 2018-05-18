@@ -121,12 +121,12 @@ class MongoServer {
             const searchQuery = {
               name: {
                     $regex: `.*${search}.*`,
-                    $options: 'si'
+                    $options: "si"
               }
             };
             wishdb.find(searchQuery).toArray()
               .then((mongoResponse) => handleResponse(logTag, mongoResponse, response))
-              .catch((error) => handleError(logTag, error, `There was an issue searching for wish ${search}` response));
+              .catch((error) => handleError(logTag, error, `There was an issue searching for wish ${search}`, response));
           });
       }
     });
@@ -176,13 +176,13 @@ class MongoServer {
                 {
                   name: {
                     $regex: `.*${search}.*`,
-                    $options: 'si'
+                    $options: "si"
                   }
                 },
                 {
                   author:{
                       $regex: `.*${search}.*`,
-                      $options: 'si'
+                      $options: "si"
                   }
                 }
               ]
@@ -198,7 +198,7 @@ class MongoServer {
     app.get("/users", (request, response) => {
       const search = decodeURI(request.query.search);
 
-      if(search !== 'undefined'){
+      if (search !== "undefined"){
         const logTag = "USER_SEARCH"
         this.logger.info(`[ ${logTag} ] searching all users ${search}`);
         MongoClient.connect(this.host)
@@ -207,7 +207,7 @@ class MongoServer {
             const searchQuery = {
               username: {
                 $regex: `.*${search}.*`,
-                $options: 'si'
+                $options: "si"
               }
             };
             coursedb.find(searchQuery).toArray()
