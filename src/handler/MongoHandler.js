@@ -234,7 +234,7 @@ class MongoHandler {
             } else {
               this.logger.info(`[ ${logTag} ] SUPERUPERUPE ${isWished} andandand ${wishId}`);
               if(isWished){
-                const options = {upsert: true};
+                const options = {upsert: false};
                 const wishsearch = {_id: new MongoClient.ObjectId(wishId)};
                 const wishupdate = {
                   $set:{
