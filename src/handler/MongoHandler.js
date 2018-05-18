@@ -42,6 +42,9 @@ class MongoHandler {
             case "WISH_DELETE":
               this.handleWishDelete(wishdb, content, resolve);
               break;
+            case "WISH_NOTIFY":
+              this.handleWishMarkNotified(wishdb,content,resolve);
+              break;
             default:
               this.logger.warn(`Unsupported action ${content.action}`);
               resolve(true);
@@ -100,7 +103,6 @@ class MongoHandler {
         shortDescription: content.shortDescription,
         description: content.description,
         sources: content.sources,
-        reviews: [],
         wish: content.wish
        }
     };
@@ -170,59 +172,17 @@ class MongoHandler {
       });
   }
 
-  handleCourseDelete(coursedb, wishdb, content, resolve) {
-    const logTag = "COURSE_DELETE"
-    this.logger.info(`[ ${logTag} ] handling course deletion`);
-    const searchQuery = {_id : new MongoClient.ObjectId(content.courseId)};
-
-    var isWished = true;
-    var wishId = "";
-    const checkQuery = { _id : new MongoClient.ObjectId(content.courseId)};
-    const showQuery = {wish: 1, _id: 0};
-
-    coursedb.findOne(checkQuery,showQuery)
-      .then((response) => {
-        if(response.wish === ""){
-          isWished = false;
-        }else{
-          wishId = response.wish;
-        }
-        coursedb.deleteOne(searchQuery)
-          .then((response) => {
-            if (response.deletedCount === 0) {
-              this.logger.info(`[ ${logTag} ] Course with id ${content.courseId} does not exist`);
-            } else {
-              this.logger.info(`[ ${logTag} ] SUPERUPERUPE ${isWished} andandand ${wishId}`);
-              if(isWished){
-                const options = {upsert: true};
-                const wishsearch = {_id: new MongoClient.ObjectId(wishId)};
-                const wishupdate = {
-                  $set:{
-                    complete:false
-                  }
-                };
-                wishdb.updateOne(wishsearch,wishupdate, options);
-              }
-              this.logger.info(`[ ${logTag} ] Deleted course with id ${content.courseId}`);
-            }
-            resolve(true);
-          })
-          .catch((error) => {
-            this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
-            resolve(false);
-          });
-    });
-  }
-
   handleWishCreation(wishdb, content, resolve) {
-    const logTag = "WISH"
+    const logTag = "WISH_CREATION"
     this.logger.info(`[ ${logTag} ] handling wish creation`);
     const searchQuery = {name: content.name, wisher: content.wisher, complete: false};
     const updateQuery = {
       $setOnInsert: {
         name: content.name,
         details: content.details,
-        wisher: content.wisher
+        wisher: content.wisher,
+        complete: false,
+        notify: false
        }
     };
     const options = {upsert: true};
@@ -249,6 +209,49 @@ class MongoHandler {
         resolve(false);
       });
   }
+  handleCourseDelete(coursedb, wishdb, content, resolve) {
+    const logTag = "COURSE_DELETE"
+    this.logger.info(`[ ${logTag} ] handling course deletion`);
+    const searchQuery = {_id : new MongoClient.ObjectId(content.courseId)};
+
+    var isWished = true;
+    var wishId = "";
+    const checkQuery = { _id : new MongoClient.ObjectId(content.courseId)};
+    const showQuery = {wish: 1, _id: 0};
+
+    coursedb.findOne(checkQuery,showQuery)
+      .then((response) => {
+        if(response.wish === ""){
+          isWished = false;
+        }else{
+          wishId = response.wish;
+        }
+        coursedb.deleteOne(searchQuery)
+          .then((response) => {
+            if (response.deletedCount === 0) {
+              this.logger.info(`[ ${logTag} ] Course with id ${content.courseId} does not exist`);
+            } else {
+              this.logger.info(`[ ${logTag} ] SUPERUPERUPE ${isWished} andandand ${wishId}`);
+              if(isWished){
+                const options = {upsert: false};
+                const wishsearch = {_id: new MongoClient.ObjectId(wishId)};
+                const wishupdate = {
+                  $set:{
+                    complete:false
+                  }
+                };
+                wishdb.updateOne(wishsearch,wishupdate, options);
+              }
+              this.logger.info(`[ ${logTag} ] Deleted course with id ${content.courseId}`);
+            }
+            resolve(true);
+          })
+          .catch((error) => {
+            this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
+            resolve(false);
+          });
+    });
+  }
 
   handleWishUpdate(wishdb, content, resolve) {
     const logTag = "WISH_UPDATE"
@@ -268,6 +271,32 @@ class MongoHandler {
           resolve(true);
         } else {
           this.logger.info(`[ ${logTag} ] Updated wish ${content.name} by ${content.wisher} with id ${content.wishId}`);
+          resolve(true);
+        }
+      })
+      .catch((error) => {
+        this.logger.error(`[ ${logTag} ] Mongo failed update query: ${JSON.stringify(error.message)}`);
+        resolve(false);
+      });
+  }
+
+  handleWishMarkNotified(wishdb, content, resolve) {
+    const logTag = "WISH_NOTIFY"
+    this.logger.info(`[ ${logTag} ] handling wish marking notification`);
+    const searchQuery = {_id: new MongoClient.ObjectId(content.wishId)};
+    const updateQuery = {
+      $set: {
+        notify: true
+       }
+    };
+    const options = {upsert: false};
+    wishdb.updateOne(searchQuery,updateQuery, options)
+      .then((response) => {
+        if (response.modifiedCount === 0) {
+          this.logger.info(`[ ${logTag} ] wish ${content.name} by ${content.wishId} doesn't exist with id ${content.wishId}`);
+          resolve(true);
+        } else {
+          this.logger.info(`[ ${logTag} ] Marked wish ${content.name} by ${content.wisher} with id ${content.wishId} as notified`);
           resolve(true);
         }
       })
