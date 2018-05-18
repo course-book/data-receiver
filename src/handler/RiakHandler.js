@@ -29,7 +29,7 @@ class RiakHandler {
       const client = new Riak.Client(this.nodes, (error, c) => {
         if (error) {
           this.logger.error(`[ RIAK ] failed to connect: ${error}`);
-          reject(false);
+          resolve(false);
           return;
         }
         this.logger.info("Successfully connected to Riak");

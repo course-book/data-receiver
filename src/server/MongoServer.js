@@ -16,7 +16,6 @@ class MongoServer {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({extended: false}));
 
-    // TODO: specify endpoints
     app.post("/login", (request, response) => {
       const logTag = "LOGIN";
       const body = request.body;
@@ -59,7 +58,8 @@ class MongoServer {
               response.status(200)
                 .send(body);
             });
-        });
+        })
+        .catch((error) => handleMongoDown(logTag, error, response));
     });
 
     app.get("/course/:id", (request, response) => {
@@ -73,25 +73,10 @@ class MongoServer {
           const objectId = new MongoClient.ObjectId(courseId);
           const searchQuery = {_id: objectId};
           coursedb.findOne(searchQuery)
-            .then((mongoResponse) => {
-              this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
-              const body = {
-                statusCode: 200,
-                message: mongoResponse
-              };
-              response.status(200)
-                .send(body);
-            })
-            .catch((error) => {
-              this.logger.error(`[ ${logTag} ] ${error.message}`);
-              const body = {
-                statusCode: 500,
-                message: `There was an issue looking up for course with id ${courseId}`
-              };
-              response.status(200)
-                .send(body);
-            });
-        });
+            .then((mongoResponse) => handleResponse(logTag, mongoResponse, response))
+            .catch((error) => handleError(logTag, error, `There was an issue looking up for course with id ${courseId}`, response));
+        })
+        .catch((error) => handleMongoDown(logTag, error, response));
     });
 
     app.get("/wish/:id", (request, response) => {
@@ -105,25 +90,10 @@ class MongoServer {
           const objectId = new MongoClient.ObjectId(wishId);
           const searchQuery = {_id: objectId};
           wishdb.findOne(searchQuery)
-            .then((mongoResponse) => {
-              this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
-              const body = {
-                statusCode: 200,
-                message: mongoResponse
-              };
-              response.status(200)
-                .send(body);
-            })
-            .catch((error) => {
-              this.logger.error(`[ ${logTag} ] ${error.message}`);
-            const body = {
-                statusCode: 500,
-                message: `There was an issue looking up for wish with id ${wishId}`
-            };
-              response.status(200)
-                .send(body);
-            });
-        });
+            .then((mongoResponse) => handleResponse(logTag, mongoResponse, response))
+            .catch((error) => handleError(logTag, error, `There was an issue looking up for wish with id ${wishId}`, response));
+        })
+        .catch((error) => handleMongoDown(logTag, error, response));
     });
 
     app.get("/wish", (request, response) => {
@@ -231,7 +201,7 @@ class MongoServer {
     app.get("/course", (request, response) => {
       const search = decodeURI(request.query.search);
 
-      if(search === 'undefined'){
+      if (search === "undefined") {
         const logTag = "COURSE_FETCH";
         this.logger.info(`[ ${logTag} ] retrieving all courses`);
         MongoClient.connect(this.host)
@@ -239,26 +209,11 @@ class MongoServer {
             const coursedb = client.db("coursebook").collection("courses");
             const searchQuery = {};
             coursedb.find(searchQuery).toArray()
-              .then((mongoResponse) => {
-                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
-                const body = {
-                  statusCode: 200,
-                  message: mongoResponse
-                };
-                response.status(200)
-                  .send(body);
-              })
-              .catch((error) => {
-                this.logger.error(`[ ${logTag} ] ${error.message}`);
-              const body = {
-                  statusCode: 500,
-                  message: `There was an issue looking up for all courses`
-              };
-                response.status(200)
-                  .send(body);
-              });
-          });
-      }else{
+              .then((mongoResponse) => handleResponse(logTag, mongoResponse, response))
+              .catch((error) => handleError(logTag, error, "There was an issue fetching all courses", response));
+          })
+          .catch((error) => handleMongoDown(logTag, error, response));
+      } else {
         const logTag = "COURSE_SEARCH"
         this.logger.info(`[ ${logTag} ] searching all courses ${search}`);
         MongoClient.connect(this.host)
@@ -278,25 +233,10 @@ class MongoServer {
               ]
             };
             coursedb.find(searchQuery).toArray()
-              .then((mongoResponse) => {
-                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
-                const body = {
-                  statusCode: 200,
-                  message: mongoResponse
-                };
-                response.status(200)
-                  .send(body);
-              })
-              .catch((error) => {
-                this.logger.error(`[ ${logTag} ] ${error.message}`);
-              const body = {
-                  statusCode: 500,
-                  message: `There was an issue looking up for the course search`
-              };
-                response.status(200)
-                  .send(body);
-              });
-          });
+              .then((mongoResponse) => handleResponse(logTag, mongoResponse, response))
+              .catch((error) => handleError(logTag, error, `There was an issue searching for course ${search}`, response));
+          })
+          .catch((error) => handleMongoDown(logTag, error, response));
         }
     });
 
@@ -316,27 +256,36 @@ class MongoServer {
               }
             };
             coursedb.find(searchQuery).toArray()
-              .then((mongoResponse) => {
-                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
-                const body = {
-                  statusCode: 200,
-                  message: mongoResponse
-                };
-                response.status(200)
-                  .send(body);
-              })
-              .catch((error) => {
-                this.logger.error(`[ ${logTag} ] ${error.message}`);
-              const body = {
-                  statusCode: 500,
-                  message: `There was an issue looking up for the users search`
-              };
-                response.status(200)
-                  .send(body);
-              });
-          });
+              .then((mongoResponse) => handleResponse(logTag, mongoResponse, response))
+              .catch((error) => handleError(logTag, error, "There was an issue searching for users", response));
+          })
+          .catch((error) => handleMongoDown(logTag, error, response));
         }
     });
+
+    const handleResponse = (logTag, message, response) => {
+      this.logger.info(`[ ${logTag} ] ${JSON.stringify(message)}`);
+      const body = {
+        statusCode: 200,
+        message: message
+      };
+      response.status(200)
+        .send(body);
+    };
+
+    const handleError = (logTag, error, message, response) => {
+      this.logger.error(`[ ${logTag} ] ${error.message}`);
+      const body = {
+          statusCode: 500,
+          message: message
+      };
+      response.status(200)
+        .send(body);
+    };
+
+    const handleMongoDown = (logTag, error, response) => {
+      handleError(logTag, error, "Mongo is down", response);
+    };
 
     app.listen(this.port, (error) => {
       if (error) {

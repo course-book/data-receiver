@@ -7,7 +7,13 @@ class RedisHandler {
   constructor(host, logger) {
     this.host = host;
     this.logger = logger;
-    this.client = redis.createClient(host);
+    this.client = redis.createClient(host, {
+      retry_strategy: (options) => {
+        this.logger.info("[ REDIS ] redis is down");
+        return Math.min(options.attempt * 100, 3000);
+      }
+    });
+
     this.logger.info("[ REDIS ] connected to client");
 
     this.receiveMessage = this.receiveMessage.bind(this);
@@ -40,15 +46,13 @@ class RedisHandler {
           return;
         }
         this.logger.error(`[ ${logTag} ] client passed invalid command ${err.command} with code ${err.code}`);
+      } else if (res === 1) {
+        this.logger.info(`[ ${logTag} ] ${content.action} invalidated with id ${key}`);
       } else {
-        if (res === 1) {
-            this.logger.info(`[ ${logTag} ] ${content.action} invalidated with id ${key}`);
-        } else {
-            this.logger.info(`[ ${logTag} ] ${content.action} with id ${key} not found`);
-        }
+        this.logger.info(`[ ${logTag} ] ${content.action} with id ${key} not found`);
       }
+      resolve(true);
     });
-    resolve(true);
   }
 }
 

@@ -209,7 +209,6 @@ class MongoHandler {
         resolve(false);
       });
   }
-
   handleCourseDelete(coursedb, wishdb, content, resolve) {
     const logTag = "COURSE_DELETE"
     this.logger.info(`[ ${logTag} ] handling course deletion`);
@@ -330,13 +329,12 @@ class MongoHandler {
     const logTag = "DOWN";
     this.logger.error(`[ ${logTag} ] Could not connect to MongoClient. Message: ${error.message}`);
     const body = {
-      json: {
-        uuid: content.uuid,
-        statuscode: 102,
-        message: "Registration is down. The registration request will be processed once it is back up."
-      }
+      uuid: content.uuid,
+      statusCode: 503,
+      message: "Mongo is down. Your request will be processed once it is back up.",
+      action: content.action
     };
-    this.respond(logTag, body, resolve);
+    this.respond(logTag, body, (status) => resolve(false));
   }
 
   respond(logTag, body, resolve) {
