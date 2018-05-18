@@ -99,7 +99,7 @@ class MongoServer {
     app.get("/wish", (request, response) => {
       const search = decodeURI(request.query.search);
 
-      if(search == 'undefined'){
+      if (search == "undefined"){
         const logTag = "WISH_FETCH";
 
         this.logger.info(`[ ${logTag} ] retrieving all wish`);
@@ -108,26 +108,10 @@ class MongoServer {
             const wishdb = client.db("coursebook").collection("wish");
             const searchQuery = {};
             wishdb.find(searchQuery).toArray()
-              .then((mongoResponse) => {
-                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
-                const body = {
-                  statusCode: 200,
-                  message: mongoResponse
-                };
-                response.status(200)
-                  .send(body);
-              })
-              .catch((error) => {
-                this.logger.error(`[ ${logTag} ] ${error.message}`);
-              const body = {
-                  statusCode: 500,
-                  message: `There was an issue looking up for all wish`
-              };
-                response.status(200)
-                  .send(body);
-              });
+              .then((mongoResponse) => handleResponse(logTag, mongoResponse, response))
+              .catch((error) => handleError(logTag, error, "There was an issue searching for all wishes", response));
           });
-      }else{
+      } else {
         const logTag = "WISH_SEARCH";
 
         this.logger.info(`[ ${logTag} ] searching all wishes ${search}`);
@@ -141,24 +125,8 @@ class MongoServer {
               }
             };
             wishdb.find(searchQuery).toArray()
-              .then((mongoResponse) => {
-                this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
-                const body = {
-                  statusCode: 200,
-                  message: mongoResponse
-                };
-                response.status(200)
-                  .send(body);
-              })
-              .catch((error) => {
-                this.logger.error(`[ ${logTag} ] ${error.message}`);
-              const body = {
-                  statusCode: 500,
-                  message: `There was an issue looking up for the wish search`
-              };
-                response.status(200)
-                  .send(body);
-              });
+              .then((mongoResponse) => handleResponse(logTag, mongoResponse, response))
+              .catch((error) => handleError(logTag, error, `There was an issue searching for wish ${search}` response));
           });
       }
     });
@@ -177,24 +145,8 @@ class MongoServer {
             notify: false
           };
           wishdb.find(searchQuery).toArray()
-            .then((mongoResponse) => {
-              this.logger.info(`[ ${logTag} ] ${JSON.stringify(mongoResponse)}`);
-              const body = {
-                statusCode: 200,
-                message: mongoResponse
-              };
-              response.status(200)
-                .send(body);
-            })
-            .catch((error) => {
-              this.logger.error(`[ ${logTag} ] ${error.message}`);
-            const body = {
-                statusCode: 500,
-                message: `There was an issue looking up for the completed but not notified wishes for user ${username} `
-            };
-              response.status(200)
-                .send(body);
-            });
+            .then((mongoResponse) => handleResponse(logTag, mongoResponse, response))
+            .catch((error) => handleError(logTag, error, `There was an issue looking up for the completed but not notified wishes for user ${username}`, response));
         });
     });
 
@@ -220,12 +172,15 @@ class MongoServer {
           .then((client) => {
             const coursedb = client.db("coursebook").collection("courses");
             const searchQuery = {$or:
-              [ {name: {
+              [
+                {
+                  name: {
                     $regex: `.*${search}.*`,
                     $options: 'si'
                   }
                 },
-                {author:{
+                {
+                  author:{
                       $regex: `.*${search}.*`,
                       $options: 'si'
                   }

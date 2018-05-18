@@ -158,7 +158,7 @@ class MongoHandler {
 
     coursedb.updateOne(searchQuery, updateQuery, options)
       .then((response) => {
-        if(response.nModified === 0) {
+        if (response.nModified === 0) {
           this.logger.info(`course ${content.name} by ${content.author} already exists`);
           resolve(true);
         } else {
